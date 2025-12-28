@@ -2,10 +2,18 @@
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+import { login } from "@/hooks/api";
 
+/**
+ * Componente de formulario para inicio de sesión con email y contraseña.
+ * Maneja la autenticación contra el backend y redirige al dashboard si es exitosa.
+ */
 export default function SigninWithPassword() {
+  const router = useRouter();
+  
   const [data, setData] = useState({
     email: process.env.NEXT_PUBLIC_DEMO_USER_MAIL || "",
     password: process.env.NEXT_PUBLIC_DEMO_USER_PASS || "",
@@ -13,27 +21,55 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  /** Actualiza el estado del formulario cuando cambian los inputs */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({
       ...data,
       [e.target.name]: e.target.value,
     });
+    if (error) setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  /** Envía las credenciales al backend, guarda el token y redirige al dashboard */
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // You can remove this code block
     setLoading(true);
+    setError(null);
 
-    setTimeout(() => {
+    try {
+      const response = await login({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (response.token) {
+        localStorage.setItem("token", response.token);
+        
+        if (response.user) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+        }
+
+        router.push("/");
+      } else {
+        setError(response.msg || "Credenciales incorrectas");
+      }
+    } catch (err: any) {
+      setError("Error de conexión. Intenta nuevamente.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-500 dark:bg-red-900/20">
+          {error}
+        </div>
+      )}
+
       <InputGroup
         type="email"
         label="Email"
