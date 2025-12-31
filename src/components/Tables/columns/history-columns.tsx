@@ -1,12 +1,15 @@
 "use client";
+
 import { Column } from "@/components/Tables/tablebase";
 import { Participant } from "@/types/participant";
 import { cn } from "@/lib/utils";
-import { PreviewIcon } from "../icons";
+import { DownloadIcon, PreviewIcon } from "../icons";
 
-export const participantColumns: Column<Participant>[] = [
+export const historyColumns = (
+  navigate: (path: string) => void,
+): Column<Participant>[] => [
   {
-    header: "Nombres",
+    header: "Participante",
     accessor: (p) => {
       const name = `${p.firstName} ${p.lastName ?? ""}`.trim();
       const initials = name
@@ -30,21 +33,19 @@ export const participantColumns: Column<Participant>[] = [
       );
     },
   },
+
   {
-    header: "Dni",
-    accessor: (p) => p.dni || "-",
+    header: "Edad",
+    accessor: (p) => p.age ?? "-",
     className: "font-medium text-dark dark:text-white",
   },
+
   {
-    header: "Email",
-    accessor: (p) => p.email || "-",
+    header: "DNI / Documento",
+    accessor: (p) => p.dni ?? "-",
     className: "font-medium text-dark dark:text-white",
   },
-  {
-    header: "Tipo",
-    accessor: (p) => p.type || p.role || "-",
-    className: "font-medium text-dark dark:text-white",
-  },
+
   {
     header: "Estado",
     accessor: (p) => (
@@ -56,23 +57,35 @@ export const participantColumns: Column<Participant>[] = [
               p.status === "ACTIVO",
             "border-red-500/20 bg-red-500/10 text-red-500":
               p.status === "INACTIVO",
-            "bg-gray-100 text-gray-700": !p.status,
           },
         )}
       >
-        {p.status || "-"}
+        {p.status ?? "—"}
       </span>
     ),
   },
+
   {
     header: "Acciones",
-    headerClassName: "text-center",
+    headerClassName: "text-right",
     accessor: (p) => (
-      <div className="flex items-center justify-center gap-x-4 text-gray-400">
-        <button className="transition-colors hover:text-dark dark:hover:text-white">
+      <div className="flex items-center justify-end gap-x-4 text-gray-400">
+        <button
+          className="transition-colors hover:text-dark dark:hover:text-white"
+          onClick={() =>
+            navigate(`/history/measurements/${p.external_id}`)
+          }
+        >
           <PreviewIcon />
+        </button>
+
+        <button
+          className="transition-colors hover:text-dark dark:hover:text-white"
+          onClick={() => console.log("Descargar", p.external_id)}
+        >
+          <DownloadIcon />
         </button>
       </div>
     ),
-  }
+  },
 ];

@@ -7,9 +7,14 @@ import { useEffect, useRef } from "react";
 interface DatePickerTwoProps {
   value?: string;
   onChange?: (newDate: string) => void;
+  label?: string;
 }
 
-const DatePickerTwo: React.FC<DatePickerTwoProps> = ({ value, onChange }) => {
+const DatePickerTwo: React.FC<DatePickerTwoProps> = ({
+  value,
+  onChange,
+  label,
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,7 +40,7 @@ const DatePickerTwo: React.FC<DatePickerTwoProps> = ({ value, onChange }) => {
   return (
     <div>
       <label className="mb-3 block text-body-sm font-medium text-dark dark:text-white">
-        Seleccionar fecha
+        {label || "Seleccionar fecha"}
       </label>
       <div className="relative">
         <input

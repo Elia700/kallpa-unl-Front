@@ -8,7 +8,6 @@ import type { Participant } from "@/types/participant";
 
 export default function ParticipantPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,8 +16,6 @@ export default function ParticipantPage() {
         setParticipants(data);
       } catch (error) {
         console.error("Error cargando participantes", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -27,8 +24,8 @@ export default function ParticipantPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1080px]">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Breadcrumb pageName="Participantes" />
+      <Breadcrumb pageName="Lista Participantes" />
+      <div className="mb-4 flex justify-end">
         <Link
           href="/pages/participant/register"
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-center font-medium text-white transition hover:bg-opacity-90"
@@ -53,15 +50,8 @@ export default function ParticipantPage() {
         </Link>
       </div>
       <div className="space-y-10">
-        {loading ? (
-          <div className="flex h-60 items-center justify-center rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          </div>
-        ) : (
-          <ParticipantsTable data={participants} />
-        )}
+        <ParticipantsTable data={participants} />
       </div>
     </div>
   );
 }
-

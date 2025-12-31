@@ -49,3 +49,9 @@ export interface InitiationRequest {
     relationship: string;
   };
 }
+export interface SelectedParticipant {
+  participant_external_id: string;
+  participant_name: string;
+  dni?: string;
+  age?: number;
+}

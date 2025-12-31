@@ -1,11 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { TableBase } from "@/components/Tables/tablebase";
-import { participantColumns } from "@/components/Tables/columns/participant-columns";
-import { Participant } from "@/types/participant";import { useMemo, useState } from "react";
-import { FiChevronDown, FiFilter, FiSearch } from "react-icons/fi";
+import { FiSearch, FiFilter, FiChevronDown } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { historyColumns } from "./columns/history-columns";
+import { Participant } from "@/types/participant";
 
-export function ParticipantsTable({ data }: { data: Participant[] }) {
+export function HistoryTable({ data }: { data: Participant[] }) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -76,9 +79,9 @@ export function ParticipantsTable({ data }: { data: Participant[] }) {
         </button>
       </div>
       <TableBase
-        columns={participantColumns}
+        columns={historyColumns((path) => router.push(path))}
         data={filteredData}
-        rowKey={(p) => String(p.id)}
+        rowKey={(a) => a.external_id ?? a.id.toString()}
       />
     </div>
   );

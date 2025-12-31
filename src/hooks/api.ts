@@ -3,13 +3,25 @@ import { get, post, postWithAuth } from "./apiUtils";
 import type { Participant, InitiationRequest } from "@/types/participant";
 import { AssessmentData, AssessmentResponseData } from "@/types/assessment";
 import type { LoginRequest, LoginResponse } from "@/types/auth";
-import { RegisterTestFormData, TestData, TestListItem, TestResponseData } from "@/types/test";
+import {
+  RegisterTestFormData,
+  TestData,
+  TestHistoryData,
+  TestListItem,
+  TestListItemForParticipant,
+  TestResponseData,
+} from "@/types/test";
 
 // ==================== AUTH ====================
 
 // Login - Conecta con tu Proxy / AuthController
-export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  const response = await post<LoginResponse, LoginRequest>("/auth/login", credentials);
+export const login = async (
+  credentials: LoginRequest,
+): Promise<LoginResponse> => {
+  const response = await post<LoginResponse, LoginRequest>(
+    "/auth/login",
+    credentials,
+  );
   return response;
 };
 
@@ -21,21 +33,36 @@ export const getParticipants = async (): Promise<Participant[]> => {
 };
 
 // Crear usuario estándar
-export const createParticipant = async (data: Participant): Promise<ApiResponse<Participant>> => {
-  const response = await postWithAuth<ApiResponse<Participant>, Participant>("/users", data);
+export const createParticipant = async (
+  data: Participant,
+): Promise<ApiResponse<Participant>> => {
+  const response = await postWithAuth<ApiResponse<Participant>, Participant>(
+    "/users",
+    data,
+  );
   return response;
 };
 
 // Crear Iniciación Deportiva (Niño + Padre - Transacción)
-export const createInitiation = async (data: InitiationRequest): Promise<ApiResponse<any>> => {
-  const response = await postWithAuth<ApiResponse<any>, InitiationRequest>("/users/initiation", data);
+export const createInitiation = async (
+  data: InitiationRequest,
+): Promise<ApiResponse<any>> => {
+  const response = await postWithAuth<ApiResponse<any>, InitiationRequest>(
+    "/users/initiation",
+    data,
+  );
   return response;
 };
 
-// Búsqueda segura por DNI 
-export const searchParticipantByDni = async (dni: string): Promise<Participant | null> => {
+// Búsqueda segura por DNI
+export const searchParticipantByDni = async (
+  dni: string,
+): Promise<Participant | null> => {
   try {
-    const response = await postWithAuth<ApiResponse<Participant>, { dni: string }>("/users/search", { dni });
+    const response = await postWithAuth<
+      ApiResponse<Participant>,
+      { dni: string }
+    >("/users/search", { dni });
     return response.data;
   } catch (error) {
     return null;
@@ -94,8 +121,37 @@ export const registerForm = async (
 ): Promise<ApiResponse<any>> => {
   const response = await post<ApiResponse<any>, RegisterTestFormData>(
     "/apply_test",
-    data
+    data,
   );
 
+  return response;
+};
+
+export const getTestsForParticipant = async (
+  participant_external_id: string,
+): Promise<TestListItemForParticipant[]> => {
+  const response = await get<ApiResponse<TestListItemForParticipant[]>>(
+    `/list-tests-participant?participant_external_id=${participant_external_id}`,
+  );
+  return response.data;
+};
+
+export const getTestHistory = async (
+  participantExternalId: string,
+  testExternalId: string,
+  months: number = 6,
+  startDate?: string,   // YYYY-MM-DD opcional
+  endDate?: string,     // YYYY-MM-DD opcional
+): Promise<ApiResponse<TestHistoryData>> => {
+  const params = new URLSearchParams({
+    participant_external_id: participantExternalId,
+    test_external_id: testExternalId,
+    months: months.toString(),
+  });
+
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+
+  const response = await get<ApiResponse<TestHistoryData>>(`/history?${params.toString()}`);
   return response;
 };
