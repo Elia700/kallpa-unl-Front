@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { ShowcaseSection } from "@/components/Layouts/showcase-section";
 import {
@@ -18,6 +18,7 @@ import { AssessmentData } from "@/types/assessment";
 import ErrorMessage from "../FormElements/errormessage";
 import { TbArrowsVertical, TbScale } from "react-icons/tb";
 import { LuHistory, LuRuler } from "react-icons/lu";
+import { Alert } from "@/components/ui-elements/alert";
 
 export function AnthropometricForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,10 +33,19 @@ export function AnthropometricForm() {
   const [date, setDate] = useState<string>("");
   const [status, setStatus] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState<"success" | "error">("success");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertDescription, setAlertDescription] = useState("");
+  useEffect(() => {
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0];
+    setDate(formattedDate);
+  }, []);
 
   const filteredParticipants = participants.filter(
     (p) =>
-        (p.firstName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (p.firstName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       (p.lastName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       (p.dni?.includes(search) ?? false),
   );
@@ -44,11 +54,19 @@ export function AnthropometricForm() {
     setErrors({});
 
     const data: AssessmentData = {
-      participant_external_id: participants.find(
-        (p) => `${p.firstName}${p.lastName ? " " + p.lastName : ""}` === selectedParticipant,
-      )?.external_id || String(participants.find(
-        (p) => `${p.firstName}${p.lastName ? " " + p.lastName : ""}` === selectedParticipant,
-      )?.id),
+      participant_external_id:
+        participants.find(
+          (p) =>
+            `${p.firstName}${p.lastName ? " " + p.lastName : ""}` ===
+            selectedParticipant,
+        )?.external_id ||
+        String(
+          participants.find(
+            (p) =>
+              `${p.firstName}${p.lastName ? " " + p.lastName : ""}` ===
+              selectedParticipant,
+          )?.id,
+        ),
       date,
       weight,
       height,
@@ -62,6 +80,13 @@ export function AnthropometricForm() {
       if (response.code === 200) {
         setBmi(response.data.bmi);
         setStatus(response.data.status);
+        setAlertType("success");
+        setAlertTitle("Medidas guardadas");
+        setAlertDescription(
+          "Las medidas antropométricas se guardaron correctamente.",
+        );
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
       }
 
       if (response.code === 400 && response.errors) {
@@ -69,6 +94,11 @@ export function AnthropometricForm() {
       }
     } catch (error) {
       console.error("Error guardando evaluación:", error);
+      setAlertType("error");
+      setAlertTitle("Error");
+      setAlertDescription("No se pudo guardar la evaluación.");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
     }
   };
   const clearFieldError = (field: string) => {
@@ -101,7 +131,7 @@ export function AnthropometricForm() {
 
           <button
             type="button"
-            className="dark:border-strokedark flex items-center gap-2 rounded-lg border border-gray-400 bg-transparent px-4 py-1.5 text-sm font-medium dark:text-white text-dark transition hover:bg-white/5"
+            className="dark:border-strokedark flex items-center gap-2 rounded-lg border border-gray-400 bg-transparent px-4 py-1.5 text-sm font-medium text-dark transition hover:bg-white/5 dark:text-white"
             onClick={() => {
               console.log("Abrir historial");
             }}
@@ -113,6 +143,17 @@ export function AnthropometricForm() {
       }
       className="!p-6.5"
     >
+      {/* alert */}
+      {showAlert && (
+        <div className="mb-6">
+          <Alert
+            variant={alertType}
+            title={alertTitle}
+            description={alertDescription}
+          />
+        </div>
+      )}
+
       <form
         action="#"
         onSubmit={handleSubmit}
@@ -170,7 +211,7 @@ export function AnthropometricForm() {
               <ErrorMessage message={errors.date} />
             </div>
           </div>
-          <div className="relative mb-6 overflow-hidden rounded-xl border border-blue/20 dark:border-white/10 bg-white/10 dark:bg-[#1a2233] p-6 shadow-lg">
+          <div className="relative mb-6 overflow-hidden rounded-xl border border-blue/20 bg-white/10 p-6 shadow-lg dark:border-white/10 dark:bg-[#1a2233]">
             <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-600"></div>
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
@@ -178,7 +219,7 @@ export function AnthropometricForm() {
                   <span className="text-xl font-bold">!</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold dark:text-white text-dark">
+                  <h3 className="text-lg font-bold text-dark dark:text-white">
                     Cálculo de IMC
                   </h3>
                   <p className="text-sm text-gray-400">Campos obligatorios</p>
@@ -237,13 +278,13 @@ export function AnthropometricForm() {
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-dashed border-blue/30 dark:border-white/10 dark:bg-white/[0.02] p-6">
+          <div className="rounded-xl border border-dashed border-blue/30 p-6 dark:border-white/10 dark:bg-white/[0.02]">
             <div className="mb-6 flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue/5 dark:bg-white/5 text-gray-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue/5 text-gray-400 dark:bg-white/5">
                 <span className="text-xl font-light">+</span>
               </div>
               <div>
-                <h3 className="text-lg font-bold dark:text-white text-dark">
+                <h3 className="text-lg font-bold text-dark dark:text-white">
                   Medidas Adicionales
                 </h3>
                 <p className="text-sm text-gray-500">
@@ -304,10 +345,10 @@ export function AnthropometricForm() {
           </div>
         </div>
         <div className="flex w-full flex-col gap-6 lg:w-1/3">
-          <div className="relative overflow-hidden rounded-2xl border border-blue/20 dark:border-white/5 bg-white/10 dark:bg-[#1a2233] p-6 shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl border border-blue/20 bg-white/10 p-6 shadow-xl dark:border-white/5 dark:bg-[#1a2233]">
             <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-red-500/10 blur-3xl"></div>
 
-            <span className="text-xs font-bold uppercase tracking-widest text-dark-200 dark:text-gray-400">
+            <span className="text-dark-200 text-xs font-bold uppercase tracking-widest dark:text-gray-400">
               Resultado Previsto
             </span>
 
@@ -399,7 +440,9 @@ export function AnthropometricForm() {
                 key={p.external_id}
                 className="cursor-pointer border-b border-gray-300 py-2 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
                 onClick={() => {
-                  setSelectedParticipant(`${p.firstName}${p.lastName ? " " + p.lastName : ""}`);
+                  setSelectedParticipant(
+                    `${p.firstName}${p.lastName ? " " + p.lastName : ""}`,
+                  );
                   clearFieldError("participant_external_id");
                   setIsModalOpen(false);
                 }}

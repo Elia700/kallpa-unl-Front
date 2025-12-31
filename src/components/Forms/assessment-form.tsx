@@ -8,6 +8,7 @@ import { TextAreaGroup } from "../FormElements/InputGroup/text-area";
 import { saveTest } from "@/hooks/api";
 import { TestData } from "@/types/test";
 import { Select } from "../FormElements/select";
+import { Alert } from "@/components/ui-elements/alert";
 
 export function AssessmentForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -19,6 +20,16 @@ export function AssessmentForm() {
   ]);
 
   const [loading, setLoading] = useState(false);
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertVariant, setAlertVariant] = useState<
+    "success" | "warning" | "error"
+  >("success");
+  const [alertMessage, setAlertMessage] = useState({
+    title: "",
+    description: "",
+  });
+
   const clearFieldError = (field: string) => {
     setErrors((prev) => {
       const newErrors = { ...prev };
@@ -26,7 +37,7 @@ export function AssessmentForm() {
       return newErrors;
     });
   };
-  const resetForm = () => {};
+  const resetForm = () => { };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -41,9 +52,31 @@ export function AssessmentForm() {
           unit: e.unit.trim(),
         })),
     };
+    setErrors({}); // limpiar errores anteriores
 
-    if (!payload.name || payload.exercises.length === 0) {
-      alert("Complete todos los campos requeridos");
+    const newErrors: Record<string, string> = {};
+
+    // nombre del test
+    if (!payload.name) {
+      newErrors.name = "Por favor ingrese el nombre del test";
+    }
+
+    // descripción
+    if (!payload.description) {
+      newErrors.description = "Por favor escriba una descripción";
+    }
+
+    // ejercicios
+    const hasValidExercise = exercises.some(
+      (e) => e.name.trim() && e.unit
+    );
+
+    if (!hasValidExercise) {
+      newErrors.exercises = "Debe asignar nombre y unidad al ejercicio";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -52,14 +85,32 @@ export function AssessmentForm() {
       const res = await saveTest(payload);
 
       if (res.status === "ok") {
-        alert("Test creado correctamente");
+        setAlertVariant("success");
+        setAlertMessage({
+          title: "Test creado correctamente",
+          description: "El test se guardó exitosamente",
+        });
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
         console.log("ID:", res.data.test_external_id);
       } else {
-        alert(res.msg);
+        setAlertVariant("error");
+        setAlertMessage({
+          title: "Error",
+          description: res.msg,
+        });
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
       }
     } catch (err) {
       console.error(err);
-      alert("Error al guardar el test");
+      setAlertVariant("error");
+      setAlertMessage({
+        title: "Error",
+        description: "Error al guardar el test",
+      });
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
     } finally {
       setLoading(false);
     }
@@ -87,6 +138,16 @@ export function AssessmentForm() {
       }
       className="!p-6.5"
     >
+      {/*alert*/}
+      {showAlert && (
+        <Alert
+          variant={alertVariant}
+          title={alertMessage.title}
+          description={alertMessage.description}
+          className="mb-6"
+        />
+      )}
+
       <form
         action="#"
         onSubmit={handleSubmit}
@@ -124,10 +185,15 @@ export function AssessmentForm() {
                 placeholder="Ej. Test de Fuerza Máxima"
                 className="flex-grow"
                 value={name}
-                handleChange={(e) => setName(e.target.value)}
+                handleChange={(e) => {
+                  setName(e.target.value);
+                  clearFieldError("name");
+                }}
                 iconPosition="left"
                 icon={<FiClipboard className="text-gray-400" size={18} />}
               />
+              <ErrorMessage message={errors.name} />
+
             </div>
             <InputGroup
               label="Frecuencia (en meses)"
@@ -143,8 +209,13 @@ export function AssessmentForm() {
               label="Descripción"
               placeholder="Describa el objetivo del test..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                clearFieldError("description");
+              }}
             />
+            <ErrorMessage message={errors.description} />
+
           </div>
         </div>
 
@@ -188,6 +259,8 @@ export function AssessmentForm() {
           </div>
 
           <div className="space-y-3">
+            <ErrorMessage message={errors.exercises} />
+
             {exercises.map((exercise, idx) => (
               <div
                 key={idx}
@@ -205,7 +278,10 @@ export function AssessmentForm() {
                     const copy = [...exercises];
                     copy[idx].name = e.target.value;
                     setExercises(copy);
+
+                    clearFieldError("exercises");
                   }}
+
                 />
                 <Select
                   label="Unidad"
@@ -218,7 +294,10 @@ export function AssessmentForm() {
                     const copy = [...exercises];
                     copy[idx].unit = e.target.value;
                     setExercises(copy);
+
+                    clearFieldError("exercises");
                   }}
+
                   placeholder="Seleccionar"
                 />
                 <div className="flex justify-end lg:justify-center lg:pb-3">

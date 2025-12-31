@@ -63,8 +63,22 @@ export const NAV_DATA = [
       },
       {
         title: "Participantes",
-        icon: Icons.Alphabet,
-        url: "/pages/participant",
+        icon: Icons.User,
+        items: [
+          {
+            title: "Listado",
+            url: "/pages/participant",
+          },
+          {
+            title: "Registrar Nuevo",
+            url: "/pages/participant/register",
+          },
+        ],
+      },
+      {
+        title: "Asistencia",
+        icon: Icons.Calendar,
+        url: "/pages/attendance",
         items: [],
       },
       {
@@ -74,14 +88,6 @@ export const NAV_DATA = [
           {
             title: "Registrar",
             url: "/anthropometric/form",
-          },
-          {
-            title: "Lista",
-            url: "/anthropometric/record",
-          },
-          {
-            title: "Historial",
-            url: "/anthropometric/measurements",
           },
         ],
       },
@@ -98,6 +104,12 @@ export const NAV_DATA = [
             url: "/evolution/assign-test",
           },
         ],
+      },
+      {
+        title: "Historial",
+        url: "/history/measurements",
+        icon: Icons.HistoryIcon,
+        items: [],
       },
     ],
   },

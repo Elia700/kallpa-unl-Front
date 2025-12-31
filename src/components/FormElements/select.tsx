@@ -6,6 +6,7 @@ import { useId, useState } from "react";
 
 type PropsType = {
   label: string;
+  name?: string;
   items: { value: string; label: string }[];
   prefixIcon?: React.ReactNode;
   className?: string;
@@ -19,6 +20,7 @@ type PropsType = {
 
 export function Select({
   items,
+  name,
   label,
   defaultValue,
   placeholder,
@@ -50,6 +52,7 @@ export function Select({
         <select
           id={id}
           value={value || ""}
+          name={name}
           onChange={(e) => {
             setIsOptionSelected(true);
             onChange?.(e);
