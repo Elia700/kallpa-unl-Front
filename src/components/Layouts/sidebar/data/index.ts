@@ -89,14 +89,6 @@ export const NAV_DATA = [
             title: "Registrar",
             url: "/anthropometric/form",
           },
-          {
-            title: "Lista",
-            url: "/anthropometric/record",
-          },
-          {
-            title: "Historial",
-            url: "/anthropometric/measurements",
-          },
         ],
       },
       {
@@ -112,6 +104,12 @@ export const NAV_DATA = [
             url: "/evolution/assign-test",
           },
         ],
+      },
+      {
+        title: "Historial",
+        url: "/history/measurements",
+        icon: Icons.HistoryIcon,
+        items: [],
       },
     ],
   },

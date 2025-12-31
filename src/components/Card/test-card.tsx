@@ -1,5 +1,5 @@
 import React from "react";
-import { FiClock, FiCheckCircle, FiCalendar } from "react-icons/fi";
+import { FiClock, FiCheckCircle} from "react-icons/fi";
 
 export interface Test {
   id: string;

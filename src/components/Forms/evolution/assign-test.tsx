@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getRecords, getTests, registerForm } from "@/hooks/api";
+import {
+  getParticipants,
+  getRecords,
+  getTests,
+  registerForm,
+} from "@/hooks/api";
 import TestCard from "@/components/Card/test-card";
 import { mapTestFromApi } from "@/utils/map";
 import { Stepper } from "@/components/Stepper/stepper";
@@ -11,6 +16,7 @@ import {
 import { EvolutionTable } from "@/components/Tables/evolution-table";
 import { EvolutionTestForm } from "./evolution-form";
 import { Test, TestData } from "@/types/test";
+import { SelectedParticipant } from "@/types/participant";
 
 export function AssignTest() {
   const [values, setValues] = useState<{ [key: string]: number }>({});
@@ -21,27 +27,36 @@ export function AssignTest() {
   const [selectedTestId, setSelectedTestId] = useState<string | number | null>(
     null,
   );
-  const [assessments, setAssessments] = useState<AssessmentResponseData[]>([]);
+  const [assessments, setAssessments] = useState<SelectedParticipant[]>([]);
   const [selectedParticipant, setSelectedParticipant] =
-    useState<AssessmentTableData | null>(null);
+    useState<SelectedParticipant | null>(null);
   const selectedTest = tests.find((t) => t.id === selectedTestId);
   const selectedTestData: TestData | null = selectedTest
     ? {
-      external_id: selectedTest.id,
-      name: selectedTest.name,
-      description: selectedTest.description,
-      frequency_months: selectedTest.frequencyMonths,
-      exercises: selectedTest.exercises,
-    }
+        external_id: selectedTest.id,
+        name: selectedTest.name,
+        description: selectedTest.description,
+        frequency_months: selectedTest.frequencyMonths,
+        exercises: selectedTest.exercises,
+      }
     : null;
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchTests = async () => {
       try {
         const apiTests = await getTests();
-        const apiRecords = await getRecords();
-        setTests(apiTests.map((t, i) => mapTestFromApi(t)));
-        setAssessments(apiRecords);
+        const apiParticipants = await getParticipants();
+
+        setTests(apiTests.map((t) => mapTestFromApi(t)));
+
+        const tableData: SelectedParticipant[] = apiParticipants.map((p) => ({
+          participant_external_id: p.external_id || "",
+          participant_name: `${p.firstName} ${p.lastName || ""}`.trim(),
+          dni: p.dni,
+          age: p.age,
+        }));
+
+        setAssessments(tableData);
       } catch (error) {
         console.error("Error cargando tests", error);
       } finally {
@@ -180,10 +195,11 @@ export function AssignTest() {
                   }
                 }
               }}
-              className={`flex items-center gap-2 rounded-lg px-8 py-2.5 text-sm font-semibold transition ${canContinue()
-                ? "bg-primary text-white hover:bg-opacity-90"
-                : "cursor-not-allowed bg-primary/40 text-white/70"
-                }`}
+              className={`flex items-center gap-2 rounded-lg px-8 py-2.5 text-sm font-semibold transition ${
+                canContinue()
+                  ? "bg-primary text-white hover:bg-opacity-90"
+                  : "cursor-not-allowed bg-primary/40 text-white/70"
+              }`}
             >
               {currentStep < 3 ? "Continuar" : "Registrar Test"}
             </button>

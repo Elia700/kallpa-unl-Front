@@ -1,19 +1,19 @@
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import type { Metadata } from "next";
-import { getRecords } from "@/hooks/api";
-import { AssessmentsTable } from "@/components/Tables/assessments-table";
+import { getParticipants } from "@/hooks/api";
+import { HistoryTable } from "@/components/Tables/history-table";
 
 export const metadata: Metadata = {
   title: "Anthropometric Measurements Page",
 };
 
-export default async function RecordPage() {
-  const assessments = await getRecords();
+export default async function HistoryPage() {
+  const participants = await getParticipants();
   return (
     <div className="mx-auto w-full max-w-[1080px]">
-      <Breadcrumb pageName="Lista Medidas Antropométricas" />
+      <Breadcrumb pageName="Historial - Participantes" />
       <div className="space-y-10">
-        <AssessmentsTable data={assessments} />
+        <HistoryTable data={participants} />
       </div>
     </div>
   );

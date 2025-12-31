@@ -37,14 +37,14 @@ export function TableBase<T>({ columns, data, rowKey }: TableBaseProps<T>) {
   const currentData = data.slice(startIndex, endIndex);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 dark:bg-[#1a2233] bg-white p-4 shadow-xl">
+    <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-[#1a2233]">
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-white/10  hover:bg-transparent">
+          <TableRow className="bg-slate-100 dark:bg-[#1e293b]">
             {columns.map((col, i) => (
               <TableHead
                 key={i}
-                className={`h-12 text-[11px] font-bold uppercase tracking-wider dark:text-gray-400 text-dark dark:bg-dark bg-gray-200 ${col.headerClassName || ""}`}
+                className={`text-slate-700 dark:text-slate-400 ${col.headerClassName || ""}`}
               >
                 {col.header}
               </TableHead>
@@ -52,11 +52,11 @@ export function TableBase<T>({ columns, data, rowKey }: TableBaseProps<T>) {
           </TableRow>
         </TableHeader>
 
-        <TableBody>
+        <TableBody className="divide-y divide-slate-200 text-slate-900 dark:divide-slate-700 dark:text-white">
           {currentData.map((row) => (
             <TableRow
               key={rowKey(row)}
-              className="border-b border-white/5 transition-colors last:border-0 dark:hover:bg-white/[0.02]"
+              className="transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/50"
             >
               {columns.map((col, i) => (
                 <TableCell

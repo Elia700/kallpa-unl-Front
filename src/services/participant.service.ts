@@ -33,7 +33,9 @@ export const participantService = {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.msg || result.message || "Error al registrar participante");
+      throw new Error(
+        result.msg || result.message || "Error al registrar participante",
+      );
     }
 
     return result;
@@ -70,7 +72,7 @@ export const participantService = {
         (p: any) =>
           p.type !== "ADMINISTRATIVO" &&
           p.type !== "DOCENTEADMIN" &&
-          p.type !== "PASANTE"
+          p.type !== "PASANTE",
       );
   },
 
@@ -89,7 +91,10 @@ export const participantService = {
 
     if (result.status === "ok" && result.data) {
       return {
-        id: result.data.external_id || result.data.java_external || result.data.id?.toString(),
+        id:
+          result.data.external_id ||
+          result.data.java_external ||
+          result.data.id?.toString(),
         firstName: result.data.firstName || result.data.first_name || "",
         lastName: result.data.lastName || result.data.last_name || "",
         dni: result.data.dni || "",
@@ -150,7 +155,52 @@ export const participantService = {
 
     return result;
   },
+
+  //Metodo adicional revisar Josep
+  async createParticipant(data: any) {
+    const isMinor = data.age < 18 || data.type === "INICIACION";
+
+    const payload = isMinor
+      ? {
+          type: "INICIACION",
+          participant: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            age: data.age,
+            dni: data.dni,
+            phone: data.phone || "",
+            email: data.email || "",
+            address: data.address || "",
+          },
+          responsible: {
+            name: data.responsibleName,
+            dni: data.responsibleDni,
+            phone: data.responsiblePhone,
+          },
+        }
+      : {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          age: data.age,
+          dni: data.dni,
+          phone: data.phone || "",
+          email: data.email || `${data.dni}@participante.local`,
+          address: data.address || "",
+          type: data.type,
+        };
+
+    const response = await fetch(`${API_URL}/save-participants`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.msg || "Error al registrar participante");
+    }
+
+    return result;
+  },
 };
-
-
-
