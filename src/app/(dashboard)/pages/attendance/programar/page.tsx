@@ -43,10 +43,33 @@ export default function Programar() {
     loadSchedules();
   }, []);
 
+  // Mapeo para normalizar días de la semana
+  const normalizeDayOfWeek = (day: string): string => {
+    const dayMap: Record<string, string> = {
+      'monday': 'Lunes', 'lunes': 'Lunes', 'LUNES': 'Lunes',
+      'tuesday': 'Martes', 'martes': 'Martes', 'MARTES': 'Martes',
+      'wednesday': 'Miércoles', 'miercoles': 'Miércoles', 'miércoles': 'Miércoles', 'MIERCOLES': 'Miércoles', 'MIÉRCOLES': 'Miércoles',
+      'thursday': 'Jueves', 'jueves': 'Jueves', 'JUEVES': 'Jueves',
+      'friday': 'Viernes', 'viernes': 'Viernes', 'VIERNES': 'Viernes',
+      'saturday': 'Sábado', 'sabado': 'Sábado', 'sábado': 'Sábado', 'SABADO': 'Sábado', 'SÁBADO': 'Sábado',
+      'sunday': 'Domingo', 'domingo': 'Domingo', 'DOMINGO': 'Domingo',
+    };
+    return dayMap[day?.toLowerCase()] || dayMap[day] || day || '';
+  };
+
   const loadSchedules = async () => {
     try {
       const res = await attendanceService.getSchedules();
-      setSchedules(res.data.data || []);
+      const rawSchedules = res.data.data || [];
+      // Normalizar los datos del backend
+      const normalizedSchedules = rawSchedules.map((s: any) => ({
+        ...s,
+        id: s.external_id || s.id,
+        day_of_week: normalizeDayOfWeek(s.dayOfWeek || s.day_of_week),
+        start_time: s.startTime || s.start_time,
+        end_time: s.endTime || s.end_time,
+      }));
+      setSchedules(normalizedSchedules);
     } catch (error) {
       console.error('Error loading schedules:', error);
     } finally {

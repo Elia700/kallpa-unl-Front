@@ -9,7 +9,6 @@ const navItems = [
   { path: '/pages/attendance/sesiones', label: 'Sesiones', icon: 'event' },
   { path: '/pages/attendance/participantes', label: 'Participantes', icon: 'group' },
   { path: '/pages/attendance/historial', label: 'Historial', icon: 'history' },
-  { path: '/pages/attendance/registro', label: 'Registrar', icon: 'how_to_reg' },
   { path: '/pages/attendance/programar', label: 'Programar', icon: 'calendar_month' },
 ];
 

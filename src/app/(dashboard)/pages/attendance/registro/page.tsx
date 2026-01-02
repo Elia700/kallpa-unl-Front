@@ -23,6 +23,9 @@ export default function Registro() {
   const [success, setSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Si viene de una sesión específica, no mostrar selectores
+  const hasPreselectedSession = searchParams.get('session') !== null;
+
   const [selectedSchedule, setSelectedSchedule] = useState(searchParams.get('session') || '');
   const [selectedDate, setSelectedDate] = useState(() => {
     const urlDate = searchParams.get('date');
@@ -202,47 +205,69 @@ export default function Registro() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Session Selection */}
+        {/* Session Selection - Solo mostrar selectores si no viene preseleccionada */}
         <div className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-blue-800">event</span>
             Información de la Sesión
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sesión *</label>
-              <select
-                value={selectedSchedule}
-                onChange={(e) => setSelectedSchedule(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Seleccionar sesión...</option>
-                {schedules.map(s => (
-                  <option key={String(s.id)} value={String(s.id)}>
-                    {s.name} - {s.day_of_week} ({s.start_time} - {s.end_time})
-                  </option>
-                ))}
-              </select>
+          
+          {hasPreselectedSession && selectedScheduleData ? (
+            // Vista simplificada cuando viene de sesiones
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-blue-600">schedule</span>
+                <div>
+                  <p className="font-semibold text-blue-800 dark:text-blue-300">{selectedScheduleData.name}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    {selectedScheduleData.day_of_week} • {selectedScheduleData.start_time} - {selectedScheduleData.end_time}
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    <strong>Fecha:</strong> {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fecha *</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-          </div>
+          ) : (
+            // Vista completa con selectores
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sesión *</label>
+                  <select
+                    value={selectedSchedule}
+                    onChange={(e) => setSelectedSchedule(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  >
+                    <option value="">Seleccionar sesión...</option>
+                    {schedules.map(s => (
+                      <option key={String(s.id)} value={String(s.id)}>
+                        {s.name} - {s.day_of_week} ({s.start_time} - {s.end_time})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Fecha *</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
 
-          {selectedScheduleData && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-400">
-                <strong>{selectedScheduleData.name}</strong> • {selectedScheduleData.day_of_week} • {selectedScheduleData.start_time} - {selectedScheduleData.end_time}
-              </p>
-            </div>
+              {selectedScheduleData && (
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-400">
+                    <strong>{selectedScheduleData.name}</strong> • {selectedScheduleData.day_of_week} • {selectedScheduleData.start_time} - {selectedScheduleData.end_time}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
