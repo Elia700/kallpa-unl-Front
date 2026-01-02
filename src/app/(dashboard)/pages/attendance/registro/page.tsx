@@ -151,7 +151,7 @@ export default function Registro() {
     try {
       const records = Object.entries(attendance).map(([participantId, status]) => ({
         participant_id: participantId,
-        status: status as 'PRESENT' | 'ABSENT' | 'JUSTIFIED'
+        status: status.toLowerCase() // Backend espera minúsculas: present, absent, justified
       }));
 
       await attendanceService.registerAttendance({
