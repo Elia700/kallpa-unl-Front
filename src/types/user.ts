@@ -5,7 +5,7 @@ export interface CreateUserRequest {
     phone?: string;
     email: string;
     password: string;
-    role: "DOCENTE" | "PASANTE";
+    role: "DOCENTE" | "PASANTE" | "ADMINISTRADOR";
   }
   
   export interface CreateUserResponse {

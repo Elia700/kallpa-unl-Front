@@ -14,13 +14,14 @@ export const UserForm = () => {
     phone: "",
     email: "",
     password: "",
-    role: "" as "DOCENTE" | "PASANTE" | "",
+    role: "" as "DOCENTE" | "PASANTE" | "ADMINISTRADOR" |  "",
   });
 
   const participantTypeOptions = [
     { value: "", label: "Seleccione un tipo" },
     { value: "DOCENTE", label: "Docente" },
     { value: "PASANTE", label: "Pasante" },
+    { value: "ADMINISTRADOR", label: "Admin" },
   ];
 
   const handleChange = (
@@ -41,7 +42,7 @@ export const UserForm = () => {
         phone: formData.phone || undefined,
         email: formData.email,
         password: formData.password,
-        role: formData.role as "DOCENTE" | "PASANTE",
+        role: formData.role as "DOCENTE" | "PASANTE" | "ADMINISTRADOR",
       };
 
       await userService.createUser(payload);

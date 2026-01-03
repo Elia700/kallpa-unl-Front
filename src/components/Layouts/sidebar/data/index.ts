@@ -1,12 +1,14 @@
+import { NavSection } from "@/types/auth";
 import * as Icons from "../icons";
-
-export const NAV_DATA = [
+export type Role = "DOCENTE" | "PASANTE" | "admin";
+export const NAV_DATA: NavSection[] = [
   {
     label: "MAIN MENU",
     items: [
       {
         title: "Dashboard",
         icon: Icons.HomeIcon,
+        roles: ["PASANTE", "ADMINISTRADOR"],
         items: [
           {
             title: "eCommerce",
@@ -110,14 +112,17 @@ export const NAV_DATA = [
       {
         title: "Evaluaciones",
         icon: Icons.DumbbellIcon,
+        roles: ["PASANTE"],
         items: [
           {
             title: "Registrar Test",
             url: "/evolution/form-test",
+            roles: ["PASANTE"],
           },
           {
             title: "Asignar Test",
             url: "/evolution/assign-test",
+            roles: ["DOCENTE"],
           },
         ],
       },
@@ -159,7 +164,7 @@ export const NAV_DATA = [
       {
         title: "Usuarios",
         url: "/pages/user",
-        icon: Icons.Table,
+        icon: Icons.User,
         items: [],
       },
     ],
