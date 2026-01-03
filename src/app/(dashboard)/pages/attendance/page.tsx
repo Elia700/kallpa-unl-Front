@@ -64,6 +64,20 @@ export default function DashboardAsistencia() {
     }
   };
 
+  // Mapeo de días a español
+  const dayToSpanish: Record<string, string> = {
+    'monday': 'Lunes', 'tuesday': 'Martes', 'wednesday': 'Miércoles',
+    'thursday': 'Jueves', 'friday': 'Viernes', 'saturday': 'Sábado', 'sunday': 'Domingo',
+    'lunes': 'Lunes', 'martes': 'Martes', 'miércoles': 'Miércoles', 'miercoles': 'Miércoles',
+    'jueves': 'Jueves', 'viernes': 'Viernes', 'sábado': 'Sábado', 'sabado': 'Sábado', 'domingo': 'Domingo'
+  };
+
+  // Función para parsear fecha en formato YYYY-MM-DD
+  const parseDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0);
+  };
+
   // Obtener las próximas sesiones de la semana
   const getUpcomingSessions = (schedules: Schedule[]) => {
     const daysMap: Record<string, number> = {
@@ -77,24 +91,71 @@ export default function DashboardAsistencia() {
     };
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const todayDay = today.getDay();
-    const upcoming: (Schedule & { nextDate: Date })[] = [];
+    const upcoming: (Schedule & { nextDate: Date; day_of_week_es: string })[] = [];
 
     schedules.forEach(schedule => {
-      const dayName = schedule.day_of_week?.toLowerCase() || '';
-      const scheduleDay = daysMap[dayName];
+      // Manejar sesiones con fecha específica
+      const specificDate = (schedule as any).specific_date || (schedule as any).specificDate;
       
-      if (scheduleDay !== undefined) {
-        // Calcular la próxima fecha para esta sesión
-        let daysUntil = scheduleDay - todayDay;
-        if (daysUntil <= 0) daysUntil += 7; // Si ya pasó esta semana, ir a la próxima
+      if (specificDate) {
+        // Sesión con fecha específica
+        const sessionDate = parseDate(specificDate);
+        sessionDate.setHours(0, 0, 0, 0);
         
-        const nextDate = new Date(today);
-        nextDate.setDate(today.getDate() + daysUntil);
+        const daysDiff = Math.ceil((sessionDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         
-        // Solo incluir sesiones de los próximos 7 días (excluyendo hoy)
-        if (daysUntil > 0 && daysUntil <= 7) {
-          upcoming.push({ ...schedule, nextDate });
+        // Solo incluir si es en el futuro (no hoy)
+        if (daysDiff > 0 && daysDiff <= 30) {
+          const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+          upcoming.push({
+            ...schedule,
+            nextDate: sessionDate,
+            day_of_week_es: dayNames[sessionDate.getDay()]
+          });
+        }
+      } else {
+        // Sesión recurrente
+        const dayName = ((schedule as any).day_of_week || (schedule as any).dayOfWeek || '')?.toLowerCase();
+        const scheduleDay = daysMap[dayName];
+        
+        if (scheduleDay !== undefined) {
+          // Calcular la próxima fecha para esta sesión
+          let daysUntil = scheduleDay - todayDay;
+          if (daysUntil <= 0) daysUntil += 7;
+          
+          const nextDate = new Date(today);
+          nextDate.setDate(today.getDate() + daysUntil);
+          nextDate.setHours(0, 0, 0, 0);
+          
+          // Validar que la fecha calculada esté dentro del rango start_date - end_date
+          const startDateStr = (schedule as any).start_date || (schedule as any).startDate;
+          const endDateStr = (schedule as any).end_date || (schedule as any).endDate;
+          
+          let isWithinRange = true;
+          
+          if (startDateStr) {
+            const startDate = parseDate(startDateStr);
+            startDate.setHours(0, 0, 0, 0);
+            if (nextDate < startDate) {
+              isWithinRange = false;
+            }
+          }
+          
+          if (endDateStr && isWithinRange) {
+            const endDate = parseDate(endDateStr);
+            endDate.setHours(0, 0, 0, 0);
+            if (nextDate > endDate) {
+              isWithinRange = false;
+            }
+          }
+          
+          // Solo incluir sesiones de los próximos 14 días (excluyendo hoy) y dentro del rango válido
+          if (daysUntil > 0 && daysUntil <= 14 && isWithinRange) {
+            const dayEs = dayToSpanish[dayName] || dayName;
+            upcoming.push({ ...schedule, nextDate, day_of_week_es: dayEs });
+          }
         }
       }
     });
@@ -307,7 +368,7 @@ export default function DashboardAsistencia() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">{session.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{session.program_name || session.day_of_week}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{(session as any).day_of_week_es || session.program_name}</p>
                     </div>
                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
                       Próxima

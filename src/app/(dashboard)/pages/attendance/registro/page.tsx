@@ -154,11 +154,22 @@ export default function Registro() {
         status: status.toLowerCase() // Backend espera minúsculas: present, absent, justified
       }));
 
-      await attendanceService.registerAttendance({
+      const requestData = {
         schedule_id: selectedSchedule,
         date: selectedDate,
         records
-      });
+      };
+      
+      // Debug: Log del request que se envía
+      console.log('📤 Enviando registro de asistencia:', requestData);
+      console.log('📋 schedule_id:', selectedSchedule);
+      console.log('📅 date:', selectedDate);
+      console.log('👥 records:', records);
+
+      const response = await attendanceService.registerAttendance(requestData);
+      
+      // Debug: Log de la respuesta
+      console.log('✅ Respuesta del backend:', response.data);
 
       setSuccess(true);
       setIsEditing(true);

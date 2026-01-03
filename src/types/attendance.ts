@@ -90,12 +90,3 @@ export interface SessionDetail {
   };
   records?: AttendanceRecord[];
 }
-
-export interface CreateScheduleData {
-  name: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  program_name?: string;
-  location?: string;
-}

@@ -91,17 +91,33 @@ export default function Historial() {
 
   // Normaliza los datos del historial que ya vienen agrupados del backend
   const normalizeHistoryData = (records: any[]): HistoryRecord[] => {
-    return records.map(r => ({
-      date: r.date,
-      schedule_id: r.schedule_id || r.scheduleId,
-      schedule_name: r.schedule_name || r.scheduleName || 'Sesión',
-      day_of_week: r.day_of_week || r.dayOfWeek || '',
-      start_time: r.start_time || r.startTime || '',
-      end_time: r.end_time || r.endTime || '',
-      presentes: r.presentes || 0,
-      ausentes: r.ausentes || 0,
-      total: r.total || 0
-    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return records.map(r => {
+      // Debug: ver qué campos llegan del backend
+      console.log('History record from backend:', r);
+      
+      // IMPORTANTE: Usar el external_id del SCHEDULE, no del registro de asistencia
+      // La estructura es: { external_id: "asistencia-id", schedule: { external_id: "schedule-id", ... } }
+      const scheduleId = r.schedule?.external_id || r.schedule_external_id || r.schedule_id || r.scheduleId;
+      
+      if (!scheduleId) {
+        console.warn('⚠️ No schedule_id found in record:', r);
+        console.warn('⚠️ r.schedule:', r.schedule);
+      } else {
+        console.log('✅ Using schedule_id:', scheduleId);
+      }
+      
+      return {
+        date: r.date,
+        schedule_id: scheduleId,
+        schedule_name: r.schedule?.name || r.schedule_name || r.scheduleName || 'Sesión',
+        day_of_week: r.schedule?.day_of_week || r.day_of_week || r.dayOfWeek || '',
+        start_time: r.schedule?.start_time || r.start_time || r.startTime || '',
+        end_time: r.schedule?.end_time || r.end_time || r.endTime || '',
+        presentes: r.presentes || 0,
+        ausentes: r.ausentes || 0,
+        total: r.total || 0
+      };
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const loadHistory = async () => {
@@ -126,6 +142,15 @@ export default function Historial() {
   };
 
   const handleDelete = async (scheduleId: string, date: string, scheduleName: string) => {
+    // Debug: verificar que scheduleId tenga valor
+    console.log('🗑️ Delete request - scheduleId:', scheduleId, 'date:', date);
+    
+    if (!scheduleId) {
+      alert('Error: No se encontró el ID del horario. Revisa la consola para más detalles.');
+      console.error('❌ scheduleId is undefined or empty!');
+      return;
+    }
+    
     if (!confirm(`¿Estás seguro de eliminar la asistencia de "${scheduleName}" del ${date}?\n\nEsta acción no se puede deshacer.`)) {
       return;
     }
@@ -140,10 +165,26 @@ export default function Historial() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  // Mapeo de días en inglés a español (abreviado)
+  const dayNameMap: Record<string, string> = {
+    'monday': 'lun', 'tuesday': 'mar', 'wednesday': 'mié', 'thursday': 'jue',
+    'friday': 'vie', 'saturday': 'sáb', 'sunday': 'dom',
+    'lunes': 'lun', 'martes': 'mar', 'miércoles': 'mié', 'miercoles': 'mié',
+    'jueves': 'jue', 'viernes': 'vie', 'sábado': 'sáb', 'sabado': 'sáb', 'domingo': 'dom'
+  };
+
+  // Formatea la fecha usando el día de la semana del backend en lugar de calcularlo
+  const formatDate = (dateStr: string, dayOfWeek?: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day, 12, 0, 0);
-    return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+    const monthName = date.toLocaleDateString('es-ES', { month: 'short' });
+    
+    // Usar el día del backend si está disponible, sino calcular (fallback)
+    const dayName = dayOfWeek 
+      ? dayNameMap[dayOfWeek.toLowerCase()] || dayOfWeek.substring(0, 3).toLowerCase()
+      : date.toLocaleDateString('es-ES', { weekday: 'short' });
+    
+    return `${dayName}, ${day} ${monthName}`;
   };
 
   const totalSessions = history.length;
@@ -226,7 +267,7 @@ export default function Historial() {
               ) : (
                 filteredHistory.map((h, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="font-medium text-gray-900 dark:text-white">{formatDate(h.date)}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="font-medium text-gray-900 dark:text-white">{formatDate(h.date, h.day_of_week)}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap"><span className="text-gray-900 dark:text-white">{h.schedule_name}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{h.start_time} - {h.end_time}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center"><span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">{h.presentes || 0}</span></td>

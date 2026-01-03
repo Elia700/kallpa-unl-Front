@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { attendanceService } from '@/services/attendance.services';
+import { participantService } from '@/services/participant.service';
 import type { Participant } from '@/types/attendance';
 
 function StatCard({ icon, iconBg, label, value }: { icon: string; iconBg: string; label: string; value: string | number }) {
@@ -35,14 +36,16 @@ export default function Participantes() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('ALL');
+  const [pasantesData, setPasantesData] = useState<Participant[]>([]);
 
   useEffect(() => {
     loadParticipants();
+    loadPasantes(); // Cargar pasantes desde el endpoint específico
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [participants, searchTerm, filterType]);
+  }, [participants, pasantesData, searchTerm, filterType]);
 
   const loadParticipants = async () => {
     try {
@@ -64,16 +67,43 @@ export default function Participantes() {
     }
   };
 
+  // Cargar pasantes desde el endpoint específico del backend
+  const loadPasantes = async () => {
+    try {
+      const pasantes = await participantService.getPasantes();
+      const normalized = pasantes.map(p => ({
+        ...p,
+        id: (p as any).external_id || p.id,
+        name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+        status: (p.status === 'active' || p.status === 'ACTIVO') ? 'ACTIVO' : 'INACTIVO',
+        type: 'PASANTE'
+      })) as Participant[];
+      setPasantesData(normalized);
+    } catch (error) {
+      console.error('Error loading pasantes:', error);
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...participants];
 
     if (filterType === 'ESTUDIANTE') {
+      // Incluir EXTERNO y PASANTE también como participante
       filtered = filtered.filter(p => 
-        ['PARTICIPANTE', 'ESTUDIANTE', 'INICIACION', 'STUDENT'].includes(p.type?.toUpperCase())
+        ['PARTICIPANTE', 'ESTUDIANTE', 'INICIACION', 'STUDENT', 'EXTERNO', 'PASANTE'].includes(p.type?.toUpperCase())
       );
     } else if (filterType === 'PROFESOR') {
       filtered = filtered.filter(p => 
         p.type?.toUpperCase() === 'PROFESOR'
+      );
+    } else if (filterType === 'EXTERNO') {
+      filtered = filtered.filter(p => 
+        p.type?.toUpperCase() === 'EXTERNO'
+      );
+    } else if (filterType === 'PASANTE') {
+      // Usar datos del endpoint específico de pasantes
+      filtered = pasantesData.length > 0 ? [...pasantesData] : participants.filter(p => 
+        p.type?.toUpperCase() === 'PASANTE'
       );
     }
 
@@ -102,13 +132,21 @@ export default function Participantes() {
     return type?.toUpperCase() === 'PROFESOR';
   };
 
+  // Contar estudiantes (incluye EXTERNO y PASANTE como participante)
   const students = participants.filter(p => 
-    ['PARTICIPANTE', 'ESTUDIANTE', 'INICIACION', 'STUDENT'].includes(p.type?.toUpperCase())
+    ['PARTICIPANTE', 'ESTUDIANTE', 'INICIACION', 'STUDENT', 'EXTERNO', 'PASANTE'].includes(p.type?.toUpperCase())
+  ).length + (pasantesData.length > 0 ? pasantesData.length : 0);
+  const externos = participants.filter(p => 
+    p.type?.toUpperCase() === 'EXTERNO'
+  ).length;
+  // Usar el conteo del endpoint de pasantes si está disponible
+  const pasantes = pasantesData.length > 0 ? pasantesData.length : participants.filter(p => 
+    p.type?.toUpperCase() === 'PASANTE'
   ).length;
   const professors = participants.filter(p => 
     p.type?.toUpperCase() === 'PROFESOR'
   ).length;
-  const active = participants.filter(p => p.status?.toUpperCase() === 'ACTIVO').length;
+  const active = participants.filter(p => p.status?.toUpperCase() === 'ACTIVO').length + pasantesData.filter(p => p.status?.toUpperCase() === 'ACTIVO').length;
 
   if (loading) return <Loading />;
 
@@ -121,8 +159,10 @@ export default function Participantes() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatCard icon="group" iconBg="bg-blue-100 text-blue-800" label="Estudiantes" value={students} />
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <StatCard icon="group" iconBg="bg-blue-100 text-blue-800" label="Participantes" value={students} />
+        <StatCard icon="person" iconBg="bg-orange-100 text-orange-600" label="Externos" value={externos} />
+        <StatCard icon="badge" iconBg="bg-cyan-100 text-cyan-600" label="Pasantes" value={pasantes} />
         <StatCard icon="school" iconBg="bg-purple-100 text-purple-600" label="Profesores" value={professors} />
         <StatCard icon="check_circle" iconBg="bg-green-100 text-green-600" label="Activos" value={active} />
       </div>
@@ -140,10 +180,12 @@ export default function Participantes() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {[
               { value: 'ALL', label: 'Todos' },
-              { value: 'ESTUDIANTE', label: 'Estudiantes' },
+              { value: 'ESTUDIANTE', label: 'Participantes' },
+              { value: 'EXTERNO', label: 'Externos' },
+              { value: 'PASANTE', label: 'Pasantes' },
               { value: 'PROFESOR', label: 'Profesores' },
             ].map((btn) => (
               <button

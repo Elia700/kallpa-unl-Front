@@ -156,6 +156,35 @@ export const participantService = {
     return result;
   },
 
+  
+  async getPasantes(): Promise<Participant[]> {
+    const response = await fetch(`${API_URL}/users/pasantes`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const result = await response.json();
+    const list = Array.isArray(result) ? result : result.data || [];
+
+    return list.map((p: any) => ({
+      id: p.external_id || p.java_external || p.id?.toString() || p.dni,
+      firstName: p.firstName || p.first_name || "",
+      lastName: p.lastName || p.last_name || "",
+      dni: p.dni || p.identification || "",
+      email: p.email || "",
+      phone: p.phone || p.phono || "",
+      address: p.address || p.direction || "",
+      age: p.age || 0,
+      type: p.type || "PASANTE",
+      role: p.role || "USER",
+      status: p.status || "ACTIVO",
+    }));
+  },
+
   //Metodo adicional revisar Josep
   async createParticipant(data: any) {
     const isMinor = data.age < 18 || data.type === "INICIACION";
