@@ -37,15 +37,34 @@ export const authService = {
     window.location.href = "/auth/sign-in";
   },
 
-  getCurrentUser() {
-    if (typeof window === "undefined") return null;
-    const userStr = localStorage.getItem("user");
-    if (!userStr) return null;
-    return JSON.parse(userStr);
-  },
+  // getCurrentUser() {
+  //   if (typeof window === "undefined") return null;
+  //   const userStr = localStorage.getItem("user");
+  //   if (!userStr) return null;
+  //   return JSON.parse(userStr);
+  // },
 
-  getToken() {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  },
+  // getToken() {
+  //   if (typeof window === "undefined") return null;
+  //   return localStorage.getItem("token");
+  // },
 };
+export function getToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
+
+export function getCurrentUser() {
+  if (typeof window === "undefined") return null;
+  const user = localStorage.getItem("user");
+  return user ? JSON.parse(user) : null;
+}
+
+export function getUserRole(): "DOCENTE" | "PASANTE" | "ADMINISTRADOR" | null {
+  const user = getCurrentUser();
+  return user?.role || null;
+}
+
+export function isAuthenticated(): boolean {
+  return !!getToken();
+}

@@ -29,3 +29,23 @@ export interface AuthUser {
   photo?: string;
   token: string;
 }
+export type Role = "DOCENTE" | "PASANTE" | "ADMINISTRADOR";
+
+export interface NavSubItem {
+  title: string;
+  url: string;
+  roles?: Role[];
+}
+
+export interface NavItem {
+  title: string;
+  icon: any;
+  url?: string;
+  roles?: Role[];
+  items: NavSubItem[];
+}
+
+export interface NavSection {
+  label: string;
+  items: NavItem[];
+}
