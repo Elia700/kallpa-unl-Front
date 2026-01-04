@@ -10,7 +10,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      router.push("/auth/sign-in");
+      router.push("/");
     } else {
       setIsAuthenticated(true);
     }

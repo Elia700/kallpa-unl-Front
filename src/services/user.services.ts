@@ -1,7 +1,15 @@
 import { CreateUserRequest, CreateUserResponse } from "../types/user";
-
+import { get, put } from "@/hooks/apiUtils";
 
 const API_URL = "http://localhost:5000/api";
+
+export interface UserProfileData {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  password?: string;
+}
 
 export const userService = {
   async createUser(data: CreateUserRequest): Promise<CreateUserResponse> {
@@ -16,9 +24,19 @@ export const userService = {
     const result = await response.json();
 
     if (!response.ok || result.status === "error") {
-      throw new Error(result.msg || "Error al crear usuario");
+      throw result;
     }
 
     return result;
+  },
+
+  async getProfile() {
+    const response = await get("/users/profile");
+    return response;
+  },
+
+  async updateProfile(data: UserProfileData) {
+    const response = await put("/users/profile", data);
+    return response;
   },
 };

@@ -72,7 +72,8 @@ export const participantService = {
         (p: any) =>
           p.type !== "ADMINISTRATIVO" &&
           p.type !== "DOCENTEADMIN" &&
-          p.type !== "PASANTE",
+          p.type !== "PASANTE" &&
+          p.status === "ACTIVO"
       );
   },
 
@@ -227,8 +228,8 @@ export const participantService = {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.msg || "Error al registrar participante");
-    }
+      throw result; // 🔥 lanzamos TODO el error del backend
+    }    
 
     return result;
   },
