@@ -576,38 +576,7 @@ export default function DashboardAsistencia() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link
-          href="/pages/attendance/historial"
-          className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:border-blue-300 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-purple-100 p-3 rounded-lg group-hover:bg-purple-200 transition-colors">
-              <span className="material-symbols-outlined text-purple-600 text-2xl">history</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Ver Historial</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Consultar registros anteriores</p>
-            </div>
-          </div>
-        </Link>
 
-        <Link
-          href="/pages/attendance/programar"
-          className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:border-blue-300 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-green-100 p-3 rounded-lg group-hover:bg-green-200 transition-colors">
-              <span className="material-symbols-outlined text-green-600 text-2xl">event</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Programar Sesión</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Crear nuevos horarios</p>
-            </div>
-          </div>
-        </Link>
-      </div>
 
       {/* Modal de Edición */}
       {editingSession && (
