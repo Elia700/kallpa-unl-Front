@@ -90,18 +90,42 @@ export default function Historial() {
 
   // Backend now returns pre-aggregated session summaries.
   // Just normalize the field names if needed and pass through.
+  // Agrupa los registros planos (uno por participante) en resúmenes por sesión
   const normalizeHistoryData = (records: any[]): HistoryRecord[] => {
-    return records.map((r: any) => ({
-      date: r.date || '',
-      schedule_id: r.schedule_id || r.schedule_external_id || '',
-      schedule_name: r.schedule_name || 'Sesión',
-      day_of_week: r.day_of_week || '',
-      start_time: r.start_time || '',
-      end_time: r.end_time || '',
-      presentes: r.presentes ?? 0,
-      ausentes: r.ausentes ?? 0,
-      total: r.total ?? 0
-    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const groups: Record<string, HistoryRecord> = {};
+
+    records.forEach(r => {
+      // Clave única para agrupar: fecha + id de horario
+      const scheduleId = r.schedule?.external_id || r.schedule_id || '';
+      const date = r.date;
+      const key = `${date}_${scheduleId}`;
+
+      if (!groups[key]) {
+        groups[key] = {
+          date: date,
+          schedule_id: scheduleId,
+          schedule_name: r.schedule?.name || 'Sesión',
+          day_of_week: r.schedule?.day_of_week || '',
+          start_time: r.schedule?.start_time || '',
+          end_time: r.schedule?.end_time || '',
+          presentes: 0,
+          ausentes: 0,
+          total: 0
+        };
+      }
+
+      // Incrementar contadores según estado
+      const status = r.status?.toUpperCase();
+      if (status === 'PRESENT') {
+        groups[key].presentes++;
+      } else if (status === 'ABSENT') {
+        groups[key].ausentes++;
+      }
+      groups[key].total++;
+    });
+
+    // Convertir el objeto agrupado en array y ordenar por fecha descendente
+    return Object.values(groups).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const loadHistory = async () => {
