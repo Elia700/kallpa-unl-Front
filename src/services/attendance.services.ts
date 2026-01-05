@@ -15,7 +15,7 @@ const getHeaders = () => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   return {
     'Content-Type': 'application/json',
-    'Authorization': token || '',
+    'Authorization': token ? `Bearer ${token}` : '',
   };
 };
 
