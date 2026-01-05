@@ -377,12 +377,7 @@ export default function DashboardAsistencia() {
           label="Participantes Activos"
           value={activeParticipants}
         />
-        <StatCard
-          icon="check_circle"
-          iconBg="bg-emerald-100 text-emerald-600"
-          label="Asistencia Promedio"
-          value="85%"
-        />
+
         <StatCard
           icon="calendar_month"
           iconBg="bg-purple-100 text-purple-600"
