@@ -89,51 +89,20 @@ export default function Historial() {
     }
   };
 
-  // Backend returns individual attendance records (one per participant).
-  // We need to GROUP them by (schedule.external_id + date) to get session summaries.
+  // Backend now returns pre-aggregated session summaries.
+  // Just normalize the field names if needed and pass through.
   const normalizeHistoryData = (records: any[]): HistoryRecord[] => {
-    const grouped: Record<string, {
-      date: string;
-      schedule: any;
-      attendances: any[];
-    }> = {};
-
-    records.forEach(r => {
-      const scheduleId = r.schedule?.external_id || r.schedule_external_id || r.schedule_id;
-      const date = r.date;
-      const key = `${scheduleId}_${date}`;
-
-      if (!grouped[key]) {
-        grouped[key] = {
-          date,
-          schedule: r.schedule || {},
-          attendances: []
-        };
-      }
-      grouped[key].attendances.push({
-        participant: r.participant,
-        status: r.status
-      });
-    });
-
-    // Convert grouped data to HistoryRecord format
-    return Object.values(grouped).map(g => {
-      const presentes = g.attendances.filter(a => a.status?.toLowerCase() === 'present').length;
-      const ausentes = g.attendances.filter(a => a.status?.toLowerCase() === 'absent').length;
-      const justificados = g.attendances.filter(a => a.status?.toLowerCase() === 'justified').length;
-
-      return {
-        date: g.date,
-        schedule_id: g.schedule?.external_id || '',
-        schedule_name: g.schedule?.name || 'Sesión',
-        day_of_week: g.schedule?.day_of_week || '',
-        start_time: g.schedule?.start_time || '',
-        end_time: g.schedule?.end_time || '',
-        presentes,
-        ausentes,
-        total: g.attendances.length
-      };
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return records.map((r: any) => ({
+      date: r.date || '',
+      schedule_id: r.schedule_id || r.schedule_external_id || '',
+      schedule_name: r.schedule_name || 'Sesión',
+      day_of_week: r.day_of_week || '',
+      start_time: r.start_time || '',
+      end_time: r.end_time || '',
+      presentes: r.presentes ?? 0,
+      ausentes: r.ausentes ?? 0,
+      total: r.total ?? 0
+    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const loadHistory = async () => {
@@ -150,8 +119,9 @@ export default function Historial() {
   const viewDetail = async (scheduleId: string, date: string) => {
     try {
       const res = await attendanceService.getSessionDetail(scheduleId, date);
-      // Backend returns an array of individual attendance records for this session
-      const records = res.data.data || [];
+      // New endpoint returns { data: { schedule_id, date, records: [...], stats: {...} } }
+      const sessionData = res.data.data || {};
+      const records = sessionData.records || [];
 
       if (records.length === 0) {
         console.warn('No attendance records found for this session');
@@ -159,30 +129,39 @@ export default function Historial() {
         return;
       }
 
-      // Build the SessionDetail structure from flat records
-      const schedule = records[0]?.schedule || {};
+      // Map records to the expected attendances format
       const attendances = records.map((r: any) => ({
-        participant: r.participant,
+        participant: {
+          id: r.participant_id,
+          name: r.participant_name
+        },
         status: r.status
       }));
 
-      const present = attendances.filter((a: any) => a.status?.toLowerCase() === 'present').length;
-      const absent = attendances.filter((a: any) => a.status?.toLowerCase() === 'absent').length;
-      const justified = attendances.filter((a: any) => a.status?.toLowerCase() === 'justified').length;
+      // Use stats from backend directly, or compute if missing
+      const stats = sessionData.stats || {
+        present: attendances.filter((a: any) => a.status?.toUpperCase() === 'PRESENT').length,
+        absent: attendances.filter((a: any) => a.status?.toUpperCase() === 'ABSENT').length,
+        justified: attendances.filter((a: any) => a.status?.toUpperCase() === 'JUSTIFIED').length,
+        total: attendances.length
+      };
+
+      // Map backend field names (presentes/ausentes) to expected (present/absent)
+      const normalizedStats = {
+        present: stats.presentes ?? stats.present ?? 0,
+        absent: stats.ausentes ?? stats.absent ?? 0,
+        justified: stats.justificados ?? stats.justified ?? 0,
+        total: stats.total ?? attendances.length
+      };
 
       const sessionDetail = {
         date,
-        schedule,
+        schedule: sessionData.schedule || { external_id: scheduleId, name: 'Sesión' },
         attendances,
-        stats: {
-          present,
-          absent,
-          justified,
-          total: attendances.length
-        }
+        stats: normalizedStats
       };
 
-      setSessionDetail(sessionDetail);
+      setSessionDetail(sessionDetail as SessionDetail);
       setShowModal(true);
     } catch (error) {
       console.error('Error loading session detail:', error);
@@ -191,12 +170,8 @@ export default function Historial() {
   };
 
   const handleDelete = async (scheduleId: string, date: string, scheduleName: string) => {
-    // Debug: verificar que scheduleId tenga valor
-    console.log('🗑️ Delete request - scheduleId:', scheduleId, 'date:', date);
-
     if (!scheduleId) {
-      alert('Error: No se encontró el ID del horario. Revisa la consola para más detalles.');
-      console.error('❌ scheduleId is undefined or empty!');
+      alert('Error: No se encontró el ID del horario.');
       return;
     }
 
@@ -378,11 +353,11 @@ export default function Historial() {
 
               <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Lista de Asistencia</h4>
               <div className="space-y-2">
-                {sessionDetail.attendances?.length > 0 ? (
-                  sessionDetail.attendances.map((r: any, idx: number) => (
+                {(sessionDetail.attendances || []).length > 0 ? (
+                  (sessionDetail.attendances || []).map((r: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {r.participant?.first_name || r.participant?.firstName || ''} {r.participant?.last_name || r.participant?.lastName || r.participant?.name || 'Participante'}
+                        {r.participant?.name || r.participant?.first_name || r.participant?.firstName || 'Participante'}
                       </span>
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${r.status?.toUpperCase() === 'PRESENT' ? 'bg-green-100 text-green-700' :
                         r.status?.toUpperCase() === 'ABSENT' ? 'bg-red-100 text-red-700' :

@@ -182,16 +182,7 @@ export default function Registro() {
         attendances: records
       };
 
-      // Debug: Log del request que se envía
-      console.log('📤 Enviando registro de asistencia:', requestData);
-      console.log('📋 schedule_external_id:', selectedSchedule);
-      console.log('📅 date:', selectedDate);
-      console.log('👥 attendances:', records);
-
       const response = await attendanceService.registerAttendance(requestData);
-
-      // Debug: Log de la respuesta
-      console.log('✅ Respuesta del backend:', response.data);
 
       setSuccess(true);
       setIsEditing(true);

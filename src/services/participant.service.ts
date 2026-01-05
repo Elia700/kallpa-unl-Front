@@ -7,7 +7,7 @@ export const participantService = {
     const token = localStorage.getItem("token");
     return {
       "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
+      Authorization: token || "",
     };
   },
 
@@ -233,7 +233,7 @@ export const participantService = {
 
     if (!response.ok) {
       throw result; // 🔥 lanzamos TODO el error del backend
-    }    
+    }
 
     return result;
   },

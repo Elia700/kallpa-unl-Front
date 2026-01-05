@@ -82,28 +82,18 @@ export default function Programar() {
       const res = await attendanceService.getSchedules();
       const rawSchedules = res.data.data || [];
 
-      // Debug: Ver qué datos llegan del backend
-      console.log('📅 Raw schedules from backend:', rawSchedules);
-
-      // Normalizar los datos del backend
       const normalizedSchedules = rawSchedules.map((s: any) => {
         const dayFromBackend = s.dayOfWeek || s.day_of_week;
         const normalizedDay = normalizeDayOfWeek(dayFromBackend);
 
-        // Debug: Ver el mapeo de cada schedule
-        console.log(`📋 Schedule "${s.name}": backend day="${dayFromBackend}" → normalized="${normalizedDay}"`);
-
-        // Si tiene specific_date pero no day_of_week, calcular el día de la semana
         let finalDay = normalizedDay;
-        const specificDate = s.specific_date || s.specificDate; // Manejar ambos formatos
+        const specificDate = s.specific_date || s.specificDate;
 
         if (!finalDay && specificDate) {
-          // Parsear la fecha correctamente (formato YYYY-MM-DD)
           const [year, month, day] = specificDate.split('-').map(Number);
           const date = new Date(year, month - 1, day, 12, 0, 0);
           const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
           finalDay = dayNames[date.getDay()];
-          console.log(`📋 Schedule "${s.name}": calculated day from specific_date="${specificDate}" → "${finalDay}"`);
         }
 
         return {
@@ -112,11 +102,10 @@ export default function Programar() {
           day_of_week: finalDay,
           start_time: s.startTime || s.start_time,
           end_time: s.endTime || s.end_time,
-          specific_date: specificDate, // Normalizar el campo
+          specific_date: specificDate,
         };
       });
 
-      console.log('✅ Normalized schedules:', normalizedSchedules);
       setSchedules(normalizedSchedules);
     } catch (error) {
       console.error('Error loading schedules:', error);

@@ -73,9 +73,7 @@ export default function DashboardAsistencia() {
       setSessions(sessionsFromBackend);
       setParticipants(participantsRes.data.data || []);
 
-      // Guardar el historial de hoy para verificar asistencia
       setTodayHistory(historyData);
-      console.log('📜 Today history:', historyData);
 
       // Obtener todos los schedules
       const schedules = schedulesRes.data.data || [];

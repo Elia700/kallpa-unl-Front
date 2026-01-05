@@ -15,7 +15,7 @@ const getHeaders = () => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   return {
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
+    'Authorization': token || '',
   };
 };
 
@@ -103,14 +103,9 @@ export const attendanceService = {
     });
   },
 
-  // Obtener detalle de una sesión específica (reutilizando history)
+  // Obtener detalle de una sesión específica
   async getSessionDetail(scheduleExternalId: string, date: string) {
-    const params = new URLSearchParams();
-    params.append('date_from', date);
-    params.append('date_to', date);
-    params.append('schedule_external_id', scheduleExternalId);
-
-    return axios.get(`${API_URL}/attendance/v2/public/history?${params.toString()}`, {
+    return axios.get(`${API_URL}/attendance/v2/public/history/session/${scheduleExternalId}/${date}`, {
       headers: getHeaders(),
     });
   },
