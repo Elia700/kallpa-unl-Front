@@ -37,6 +37,34 @@ export const attendanceService = {
     });
   },
 
+  // Crear un nuevo programa
+  async createProgram(data: { name: string; description?: string; color?: string }) {
+    return axios.post(`${API_URL}/attendance/v2/public/programs`, data, {
+      headers: getHeaders(),
+    });
+  },
+
+  // Actualizar un programa
+  async updateProgram(id: string, data: { name?: string; description?: string; color?: string }) {
+    return axios.put(`${API_URL}/attendance/v2/public/programs/${id}`, data, {
+      headers: getHeaders(),
+    });
+  },
+
+  // Eliminar un programa
+  async deleteProgram(id: string) {
+    return axios.delete(`${API_URL}/attendance/v2/public/programs/${id}`, {
+      headers: getHeaders(),
+    });
+  },
+
+  // Obtener participantes de un programa específico
+  async getProgramParticipants(programId: string) {
+    return axios.get(`${API_URL}/attendance/v2/public/programs/${programId}/participants`, {
+      headers: getHeaders(),
+    });
+  },
+
   // Crear un nuevo horario
   async createSchedule(data: CreateScheduleData) {
     return axios.post(`${API_URL}/attendance/v2/public/schedules`, data, {

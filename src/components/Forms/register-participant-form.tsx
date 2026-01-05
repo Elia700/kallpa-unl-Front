@@ -392,3 +392,5 @@ const RegisterParticipantForm = () => {
     </ShowcaseSection>
   );
 };
+
+export { RegisterParticipantForm };

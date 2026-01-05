@@ -93,12 +93,9 @@ export default function DashboardAsistencia() {
       const todaySessions = getTodaySessions(schedules);
       setTodaySchedules(todaySessions);
 
-      // Obtener próximas sesiones (sesiones programadas para los próximos días)
-      const upcoming = getUpcomingSessions(normalizedSchedules);
-      console.log('📆 UPCOMING SESSIONS:', upcoming.map(s => ({ name: (s as any).name, day_of_week_es: (s as any).day_of_week_es })));
+      const upcoming = getUpcomingSessions(schedules);
       setUpcomingSessions(upcoming);
 
-      // Programs are in the 5th element of results array, let's restructure:
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -143,8 +140,6 @@ export default function DashboardAsistencia() {
     const todayDay = today.getDay();
     const todayStr = today.toISOString().split('T')[0];
     const todaySessions: Schedule[] = [];
-    
-    console.log(`🗓️ HOY: todayDay=${todayDay} (0=Dom, 1=Lun, ..., 6=Sáb), todayStr=${todayStr}`);
 
     schedules.forEach(schedule => {
       const specificDate = (schedule as any).specific_date || (schedule as any).specificDate;
@@ -152,7 +147,6 @@ export default function DashboardAsistencia() {
       if (specificDate) {
         // Sesión con fecha específica - verificar si es hoy
         if (specificDate === todayStr) {
-          console.log(`✅ "${(schedule as any).name}" agregada (fecha específica coincide)`);
           todaySessions.push(schedule);
         }
       } else {
@@ -171,7 +165,6 @@ export default function DashboardAsistencia() {
             const startDate = parseDate(startDateStr);
             startDate.setHours(0, 0, 0, 0);
             if (today < startDate) {
-              console.log(`❌ "${(schedule as any).name}" excluida: hoy < start_date (${startDateStr})`);
               isWithinRange = false;
             }
           }
@@ -180,17 +173,13 @@ export default function DashboardAsistencia() {
             const endDate = parseDate(endDateStr);
             endDate.setHours(0, 0, 0, 0);
             if (today > endDate) {
-              console.log(`❌ "${(schedule as any).name}" excluida: hoy > end_date (${endDateStr})`);
               isWithinRange = false;
             }
           }
 
           if (isWithinRange) {
-            console.log(`✅ "${(schedule as any).name}" agregada (día recurrente coincide)`);
             todaySessions.push(schedule);
           }
-        } else {
-          console.log(`⏭️ "${(schedule as any).name}" omitida: scheduleDay=${scheduleDay} !== todayDay=${todayDay}`);
         }
       }
     });
@@ -259,7 +248,8 @@ export default function DashboardAsistencia() {
             const startDate = parseDate(startDateStr);
             startDate.setHours(0, 0, 0, 0);
             if (startDate > today) {
-              candidateDate = new Date(startDate);
+              // Start date is in the future, skip this session for now
+              isWithinRange = false;
             }
           }
 
@@ -267,7 +257,7 @@ export default function DashboardAsistencia() {
             const endDate = parseDate(endDateStr);
             endDate.setHours(0, 0, 0, 0);
             if (nextDate > endDate) {
-              isValid = false;
+              isWithinRange = false;
             }
           }
 
@@ -334,7 +324,7 @@ export default function DashboardAsistencia() {
     };
 
     try {
-      await attendanceService.updateSchedule(sessionIdStr, data);
+      await attendanceService.updateSchedule(String(sessionId), data);
       setEditingSession(null);
       loadData(); // Recargar datos
       alert('Sesión actualizada correctamente');
@@ -458,7 +448,7 @@ export default function DashboardAsistencia() {
                             return p.external_id === String(pid) || p.id === pid || String(p.id) === String(pid) || p.name === (schedule as any).program_name;
                           }) || null;
 
-                          const programDisplayName = schedule.program_name || prog?.name || null;
+                          const programDisplayName = (schedule as any).program_name || prog?.name || null;
                           if (!programDisplayName) return null;
 
                           const progColor = prog?.color || '#3B82F6';

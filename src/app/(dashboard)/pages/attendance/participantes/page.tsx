@@ -63,7 +63,7 @@ export default function Participantes() {
       // Usar getAllUsers para obtener todos los usuarios incluyendo profesores
       const res = await attendanceService.getAllUsers();
       const rawData = res.data.data || [];
-      const normalized = rawData.map(p => ({
+      const normalized = rawData.map((p: any) => ({
         ...p,
         id: p.external_id || p.id,
         name: p.name || `${p.first_name || p.firstName || ''} ${p.last_name || p.lastName || ''}`.trim(),
