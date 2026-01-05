@@ -71,6 +71,7 @@ export default function Registro() {
   }, [participants, searchParams]);
 
   const loadExistingAttendance = async (scheduleId: string, date: string) => {
+    if (!scheduleId) return;
     try {
       const res = await attendanceService.getSessionDetail(scheduleId, date);
       const records = res.data.data?.records || [];

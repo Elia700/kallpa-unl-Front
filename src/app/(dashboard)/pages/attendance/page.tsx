@@ -486,15 +486,21 @@ export default function DashboardAsistencia() {
 
                     {/* Botones de acción */}
                     <div className="mt-3 flex gap-2">
-                      <Link
-                        href={`/pages/attendance/registro?session=${scheduleId}`}
-                        className={`flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors ${isCompleted
-                          ? 'bg-gray-600 text-white hover:bg-gray-700'
-                          : 'bg-blue-800 text-white hover:bg-blue-900'
-                          }`}
-                      >
-                        {isCompleted ? 'Editar Asistencia' : 'Registrar Asistencia'}
-                      </Link>
+                      {scheduleId ? (
+                        <Link
+                          href={`/pages/attendance/registro?session=${scheduleId}`}
+                          className={`flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors ${isCompleted
+                            ? 'bg-gray-600 text-white hover:bg-gray-700'
+                            : 'bg-blue-800 text-white hover:bg-blue-900'
+                            }`}
+                        >
+                          {isCompleted ? 'Editar Asistencia' : 'Registrar Asistencia'}
+                        </Link>
+                      ) : (
+                        <button disabled className="flex-1 text-center py-2 rounded-lg text-sm font-medium bg-gray-300 text-gray-500 cursor-not-allowed">
+                          No disponible
+                        </button>
+                      )}
 
                     </div>
                   </div>

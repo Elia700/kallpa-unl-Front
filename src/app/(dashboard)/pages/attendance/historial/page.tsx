@@ -115,6 +115,7 @@ export default function Historial() {
   };
 
   const viewDetail = async (scheduleId: string, date: string) => {
+    if (!scheduleId) return; // Prevent invalid URL request
     try {
       const res = await attendanceService.getSessionDetail(scheduleId, date);
       // New endpoint returns { data: { schedule_id, date, records: [...], stats: {...} } }
