@@ -24,6 +24,7 @@ export default function Registro() {
   const [success, setSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentProgram, setCurrentProgram] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Si viene de una sesión específica, no mostrar selectores
   const hasPreselectedSession = searchParams.get('session') !== null;
@@ -40,6 +41,20 @@ export default function Registro() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Recargar participantes cuando la página vuelve a estar visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && currentProgram) {
+        refreshParticipants();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentProgram]);
 
   useEffect(() => {
     const sessionParam = searchParams.get('session');
@@ -149,6 +164,37 @@ export default function Registro() {
       }
     } catch (error) {
       setParticipants([]);
+    }
+  };
+
+  const refreshParticipants = async () => {
+    setRefreshing(true);
+    try {
+      // Load participants - filtered by program if available, otherwise all
+      const participantsRes = await attendanceService.getParticipantsByProgram(currentProgram || undefined);
+      const rawParticipants = participantsRes.data.data || [];
+      const normalizedParticipants = rawParticipants.map((p: any) => ({
+        ...p,
+        id: p.external_id || p.id,
+        name: p.name || `${p.first_name || p.firstName || ''} ${p.last_name || p.lastName || ''}`.trim(),
+        status: (p.status === 'active' || p.status === 'ACTIVO') ? 'ACTIVO' : 'INACTIVO'
+      })) as Participant[];
+
+      // Mantener el estado de asistencia de los participantes existentes
+      // y agregar los nuevos con estado 'PRESENT' por defecto
+      const newAttendance = { ...attendance };
+      normalizedParticipants.forEach(p => {
+        if (!(p.id in newAttendance)) {
+          newAttendance[p.id] = 'PRESENT';
+        }
+      });
+
+      setAllParticipants(normalizedParticipants);
+      setParticipants(normalizedParticipants);
+      setAttendance(newAttendance);
+    } catch (error) {
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -289,7 +335,17 @@ export default function Registro() {
                 </p>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={refreshParticipants}
+                disabled={refreshing}
+                className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors disabled:opacity-50 flex items-center gap-1"
+                title="Actualizar lista de participantes"
+              >
+                <span className={`material-symbols-outlined text-base ${refreshing ? 'animate-spin' : ''}`}>refresh</span>
+                {refreshing ? 'Actualizando...' : 'Actualizar'}
+              </button>
               <button type="button" onClick={() => markAll('PRESENT')} className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors">
                 Todos Presentes
               </button>
@@ -315,7 +371,6 @@ export default function Registro() {
                   {[
                     { value: 'PRESENT', label: 'P', color: 'green', title: 'Presente' },
                     { value: 'ABSENT', label: 'A', color: 'red', title: 'Ausente' },
-                    { value: 'JUSTIFIED', label: 'J', color: 'yellow', title: 'Justificado' },
                   ].map(status => (
                     <button
                       key={status.value}

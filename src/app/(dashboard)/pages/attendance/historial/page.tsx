@@ -327,7 +327,7 @@ export default function Historial() {
               </button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
                   <p className="text-2xl font-bold text-green-600">{sessionDetail.stats?.present || 0}</p>
                   <p className="text-xs text-green-700 dark:text-green-400">Presentes</p>
@@ -335,10 +335,6 @@ export default function Historial() {
                 <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-center">
                   <p className="text-2xl font-bold text-red-600">{sessionDetail.stats?.absent || 0}</p>
                   <p className="text-xs text-red-700 dark:text-red-400">Ausentes</p>
-                </div>
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{sessionDetail.stats?.justified || 0}</p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-400">Justificados</p>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
                   <p className="text-2xl font-bold text-blue-600">{sessionDetail.stats?.total || 0}</p>
@@ -355,11 +351,9 @@ export default function Historial() {
                         {r.participant?.name || r.participant?.first_name || r.participant?.firstName || 'Participante'}
                       </span>
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${r.status?.toUpperCase() === 'PRESENT' ? 'bg-green-100 text-green-700' :
-                        r.status?.toUpperCase() === 'ABSENT' ? 'bg-red-100 text-red-700' :
-                          'bg-yellow-100 text-yellow-700'
+                        'bg-red-100 text-red-700'
                         }`}>
-                        {r.status?.toUpperCase() === 'PRESENT' ? 'Presente' :
-                          r.status?.toUpperCase() === 'ABSENT' ? 'Ausente' : 'Justificado'}
+                        {r.status?.toUpperCase() === 'PRESENT' ? 'Presente' : 'Ausente'}
                       </span>
                     </div>
                   ))
