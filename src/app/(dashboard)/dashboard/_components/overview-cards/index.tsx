@@ -38,7 +38,7 @@ export function OverviewCardsGroup() {
   const { products, users } = overviewData;
 
   return (
-    <div className="flex flex-col gap-6"> 
+    <div className="flex flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-7.5">
         <OverviewCard
           label="Participantes"
@@ -55,12 +55,7 @@ export function OverviewCardsGroup() {
           Icon={FiActivity}
           variant="orange"
         />
-        <OverviewCard
-          label="Asistencia del día"
-          data={{ ...products, value: compactFormat(products.value) }}
-          Icon={FiBox}
-          variant="purple"
-        />
+
         <OverviewCard
           label="Pruebas Pendientes"
           data={{ ...users, value: compactFormat(users.value) }}
