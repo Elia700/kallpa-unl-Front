@@ -41,7 +41,7 @@ export const NAV_DATA: NavSection[] = [
         icon: Icons.Calendar,
         items: [
           {
-            title: "Dashboard",
+            title: "Sesiones",
             url: "/pages/attendance",
           },
           {
