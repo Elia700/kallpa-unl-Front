@@ -84,6 +84,22 @@ export const RegisterParticipantForm = () => {
     setLoading(true);
     setErrors({});
 
+    const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
+    if (isMinor && formData.program === "FUNCIONAL") {
+      setErrors((prev) => ({
+        ...prev,
+        program:
+          "Los participantes menores de 18 años no pueden inscribirse en el programa Funcional.",
+      }));
+      triggerAlert(
+        "error",
+        "Restricción de edad",
+        "Los menores de 18 años no pueden inscribirse en el programa Funcional.",
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await participantService.createParticipant({
         ...formData,
