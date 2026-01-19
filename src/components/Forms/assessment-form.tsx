@@ -14,7 +14,7 @@ export function AssessmentForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [frequencyMonths, setFrequencyMonths] = useState<number>(3);
+  const [frequencyMonths, setFrequencyMonths] = useState("");
   const [exercises, setExercises] = useState<{ name: string; unit: string }[]>([
     { name: "", unit: "" },
   ]);
@@ -40,15 +40,18 @@ export function AssessmentForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload: TestData = {
+    const payload: any = {
       name: name.trim(),
       description: description.trim(),
-      frequency_months: frequencyMonths,
       exercises: exercises.map(e => ({
         name: e.name.trim(),
         unit: e.unit.trim(),
       })),
     };
+
+    if (frequencyMonths !== "") {
+      payload.frequency_months = Number(frequencyMonths);
+    }
     
     setErrors({});
 
@@ -65,7 +68,7 @@ export function AssessmentForm() {
         setShowAlert(true);
         setName("");
         setDescription("");
-        setFrequencyMonths(3);
+        setFrequencyMonths("");
         setExercises([{ name: "", unit: "" }]);
         setTimeout(() => setShowAlert(false), 3000);
       } else {
@@ -170,14 +173,23 @@ export function AssessmentForm() {
             </div>
             <InputGroup
               label="Frecuencia (en meses)"
-              type="number"
-              placeholder="3"
+              type="text"
+              placeholder="1–12"
               className="flex-grow"
-              value={frequencyMonths.toString()}
-              handleChange={(e) => setFrequencyMonths(Number(e.target.value))}
+              value={frequencyMonths}
+              handleChange={(e) => {
+                const v = e.target.value;
+
+                if (v === "" || (/^\d+$/.test(v) && +v >= 1 && +v <= 12)) {
+                  setFrequencyMonths(v);
+                  clearFieldError("frequency_months");
+                }
+              }}
               iconPosition="left"
               icon={<FiCalendar className="text-gray-400" size={18} />}
             />
+            <ErrorMessage message={errors.frequency_months} />
+
             <TextAreaGroup
               label="Descripción"
               placeholder="Describa el objetivo del test..."
@@ -231,7 +243,7 @@ export function AssessmentForm() {
           </div>
 
           <div className="space-y-3">
-          {errors.exercises && <ErrorMessage message={errors.exercises} />}
+            {errors.exercises && <ErrorMessage message={errors.exercises} />}
 
             {exercises.map((exercise, idx) => (
               <div

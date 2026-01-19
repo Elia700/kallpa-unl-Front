@@ -12,24 +12,24 @@ import { Alert } from "../ui-elements/alert";
 export const UserForm = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showAlert, setShowAlert] = useState(false);
-const [alertType, setAlertType] = useState<"success" | "error" | "warning">("success");
-const [alertTitle, setAlertTitle] = useState("");
-const [alertDescription, setAlertDescription] = useState("");
-const showTemporaryAlert = (
-  type: "success" | "error" | "warning",
-  title: string,
-  description: string,
-  duration = 3000
-) => {
-  setAlertType(type);
-  setAlertTitle(title);
-  setAlertDescription(description);
-  setShowAlert(true);
+  const [alertType, setAlertType] = useState<"success" | "error" | "warning">("success");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertDescription, setAlertDescription] = useState("");
+  const showTemporaryAlert = (
+    type: "success" | "error" | "warning",
+    title: string,
+    description: string,
+    duration = 3000
+  ) => {
+    setAlertType(type);
+    setAlertTitle(title);
+    setAlertDescription(description);
+    setShowAlert(true);
 
-  setTimeout(() => {
-    setShowAlert(false);
-  }, duration);
-};
+    setTimeout(() => {
+      setShowAlert(false);
+    }, duration);
+  };
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -60,6 +60,10 @@ const showTemporaryAlert = (
     e.preventDefault();
     setErrors({});
     try {
+      if (!formData.email) {
+        setErrors((prev) => ({ ...prev, email: "El correo electrónico es obligatorio" }));
+        return;
+      }
       const payload: CreateUserRequest = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -175,7 +179,7 @@ const showTemporaryAlert = (
         <div className="mb-4.5 grid grid-cols-1 gap-6 xl:grid-cols-2">
           <div>
             <InputGroup
-              label="Email Address (Optional)"
+              label="Email Address"
               name="email"
               type="email"
               placeholder="john@example.com"
