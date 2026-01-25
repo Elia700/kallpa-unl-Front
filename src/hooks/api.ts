@@ -1,5 +1,5 @@
 import { ApiResponse } from "@/types/api";
-import { get, post, postWithAuth } from "./apiUtils";
+import { del, get, post, postWithAuth, put } from "./apiUtils";
 import type { Participant, InitiationRequest } from "@/types/participant";
 import { AssessmentData, AssessmentResponseData, BmiDistributionItem } from "@/types/assessment";
 import type { LoginRequest, LoginResponse } from "@/types/auth";
@@ -111,7 +111,10 @@ export const getBmiDistribution = async (): Promise<BmiDistributionItem[]> => {
 // ==================== TEST FORMULARIOS ====================
 export const getTests = async (): Promise<TestListItem[]> => {
   const response = await get<ApiResponse<TestListItem[]>>("/list-test");
-  return response.data;
+  return response.data.map(test => ({
+    ...test,
+    already_done: !!test.already_done,
+  }));
 };
 
 export const saveTest = async (
@@ -169,4 +172,24 @@ export const getTestById = async (
   }
 
   return response.data;
+};
+
+export const updateTest = async (
+  data: TestData & { test_external_id: string }
+): Promise<ApiResponse<TestResponseData>> => {
+  const response = await put<ApiResponse<TestResponseData>, typeof data>(
+    "/update-test",
+    data
+  );
+
+  return response;
+};
+
+export const deleteTest = async (
+  external_id: string
+): Promise<ApiResponse<any>> => {
+  const response = await del<ApiResponse<any>>(
+    `/delete-test/${external_id}`
+  );
+  return response;
 };

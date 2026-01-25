@@ -30,12 +30,12 @@ export function AssignTest() {
   const selectedTest = tests.find((t) => t.id === selectedTestId);
   const selectedTestData: TestData | null = selectedTest
     ? {
-        external_id: selectedTest.id,
-        name: selectedTest.name,
-        description: selectedTest.description,
-        frequency_months: selectedTest.frequencyMonths,
-        exercises: selectedTest.exercises,
-      }
+      external_id: selectedTest.id,
+      name: selectedTest.name,
+      description: selectedTest.description,
+      frequency_months: selectedTest.frequencyMonths,
+      exercises: selectedTest.exercises,
+    }
     : null;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +45,10 @@ export function AssignTest() {
         const apiTests = await getTests();
         const apiParticipants = await getParticipants();
 
-        setTests(apiTests.map((t) => mapTestFromApi(t)));
-
+        const activeTests = apiTests
+          .filter((t: any) => t.status === "Activo")
+          .map((t: any) => mapTestFromApi(t));
+        setTests(activeTests);
         const tableData: SelectedParticipant[] = apiParticipants.map((p) => ({
           participant_external_id: p.external_id || "",
           participant_name: `${p.firstName} ${p.lastName || ""}`.trim(),
@@ -228,11 +230,10 @@ export function AssignTest() {
                   }
                 }
               }}
-              className={`flex items-center gap-2 rounded-lg px-8 py-2.5 text-sm font-semibold transition ${
-                canContinue()
+              className={`flex items-center gap-2 rounded-lg px-8 py-2.5 text-sm font-semibold transition ${canContinue()
                   ? "bg-primary text-white hover:bg-opacity-90"
                   : "cursor-not-allowed bg-primary/40 text-white/70"
-              }`}
+                }`}
             >
               {currentStep < 3 ? "Continuar" : "Registrar Test"}
             </button>

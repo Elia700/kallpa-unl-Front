@@ -23,6 +23,7 @@ export interface TestListItem {
   description: string | null;
   frequency_months: number;
   exercises: TestExercise[];
+  already_done: boolean;
 }
 export interface Test {
   id: string;

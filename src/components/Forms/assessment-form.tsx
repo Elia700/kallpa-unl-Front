@@ -5,9 +5,10 @@ import { ShowcaseSection } from "@/components/Layouts/showcase-section";
 import { FiCalendar, FiClipboard, FiEdit, FiSave } from "react-icons/fi";
 import ErrorMessage from "../FormElements/errormessage";
 import { TextAreaGroup } from "../FormElements/InputGroup/text-area";
-import { saveTest } from "@/hooks/api";
+import { saveTest, updateTest } from "@/hooks/api";
 import { Select } from "../FormElements/select";
 import { Alert } from "@/components/ui-elements/alert";
+import { useRouter } from "next/navigation";
 
 interface AssessmentInitialData {
   external_id?: string;
@@ -25,6 +26,8 @@ export function AssessmentForm({ initialData }: { initialData?: AssessmentInitia
   const [exercises, setExercises] = useState<{ name: string; unit: string }[]>([
     { name: "", unit: "" },
   ]);
+  const router = useRouter();
+
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
@@ -68,14 +71,13 @@ export function AssessmentForm({ initialData }: { initialData?: AssessmentInitia
     if (frequencyMonths !== "") {
       payload.frequency_months = Number(frequencyMonths);
     }
-    
+
     setErrors({});
 
     try {
       setLoading(true);
-      const res = isEditing 
-      //aqui llamas al updateTest--->AJILA
-        ? await saveTest(payload) 
+      const res = isEditing
+        ? await updateTest(payload)
         : await saveTest(payload);
 
       if (res.status === "ok") {
@@ -85,21 +87,16 @@ export function AssessmentForm({ initialData }: { initialData?: AssessmentInitia
           description: "Los cambios se guardaron correctamente",
         });
         setShowAlert(true);
-        setName("");
-        setDescription("");
-        setFrequencyMonths("");
-        setExercises([{ name: "", unit: "" }]);
-        setTimeout(() => setShowAlert(false), 3000);
+        setTimeout(() => {
+          router.push("/evolution/list-test");
+        }, 1000);
       } else {
         if (res.msg && typeof res.msg === "object") {
-          // Mapear errores de backend al estado de errors
           const fieldErrors: Record<string, string> = {};
           Object.entries(res.msg).forEach(([key, value]) => {
-            // Si es un string directo, lo asignamos
             if (typeof value === "string") {
               fieldErrors[key] = value;
             } else if (Array.isArray(value)) {
-              // Si quieres manejar errores por índice de ejercicio, podrías mapearlos aquí
               fieldErrors[key] = "Algunos ejercicios son inválidos";
             }
           });
@@ -134,8 +131,8 @@ export function AssessmentForm({ initialData }: { initialData?: AssessmentInitia
       icon={<FiEdit size={24} />}
       title={isEditing ? "Editar Evaluación" : "Registro Nuevo Test"}
       description={
-        isEditing 
-          ? `Modificando los datos de: ${initialData?.name}` 
+        isEditing
+          ? `Modificando los datos de: ${initialData?.name}`
           : "Ingresa los datos para crear un nuevo test"
       }
       badgeText={isEditing ? "Modo Edición" : "Nuevo Ingreso"}
