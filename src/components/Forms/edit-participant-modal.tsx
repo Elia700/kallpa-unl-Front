@@ -87,9 +87,13 @@ export function EditParticipantModal({
                     onSuccess();
                     onClose();
                 }, 1500);
-            } else if (response.code === 400 && response.data) {
+            }
+
+            if (response.code === 400 && response.data) {
                 setErrors(response.data);
-            } else if (response.code === 404) {
+            }
+
+            if (response.code === 404) {
                 setAlertType("error");
                 setAlertMessage("Participante no encontrado");
                 setShowAlert(true);
@@ -101,10 +105,6 @@ export function EditParticipantModal({
                 if (data && data.errors) {
                     setErrors(data.errors);
                 }
-            } else if (error.request) {
-                console.log("No se pudo conectar al servidor");
-            } else {
-                console.log("Error desconocido:", error.message);
             }
             setAlertType("error");
             setAlertMessage("Error al actualizar el participante");
