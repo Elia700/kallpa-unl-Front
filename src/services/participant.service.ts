@@ -109,6 +109,46 @@ export const participantService = {
     return null;
   },
 
+  async getById(externalId: string): Promise<Participant | null> {
+    // No hay endpoint individual, obtenemos todos y filtramos
+    const response = await fetch(`${API_URL}/users`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const result = await response.json();
+    const list = Array.isArray(result) ? result : result.data || [];
+
+    const found = list.find(
+      (p: any) =>
+        p.external_id === externalId ||
+        p.java_external === externalId ||
+        p.id?.toString() === externalId
+    );
+
+    if (found) {
+      return {
+        id: found.external_id || found.java_external || found.id?.toString(),
+        firstName: found.firstName || found.first_name || "",
+        lastName: found.lastName || found.last_name || "",
+        dni: found.dni || "",
+        email: found.email || "",
+        phone: found.phone || found.phono || "",
+        address: found.address || found.direction || "",
+        age: found.age || 0,
+        type: found.type || found.type_stament || "PARTICIPANTE",
+        role: found.role || "USER",
+        status: found.status || "ACTIVO",
+      };
+    }
+
+    return null;
+  },
+
   async changeStatus(externalId: string, newStatus: string) {
     const response = await fetch(`${API_URL}/users/${externalId}/status`, {
       method: "PUT",
