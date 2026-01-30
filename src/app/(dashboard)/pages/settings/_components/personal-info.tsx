@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { userService, UserProfileData } from "@/services/user.services";
 import { ShowcaseSection } from "@/components/Layouts/showcase-section";
-import { FiEdit, FiAlertTriangle } from "react-icons/fi";
+import InputGroup from "@/components/FormElements/InputGroup";
+import { FiEdit, FiAlertTriangle, FiUser, FiPhone, FiMapPin, FiLock } from "react-icons/fi";
 
-// Cuentas especiales que están hardcodeadas y no pueden editar su perfil
 const HARDCODED_ACCOUNTS = ["dev@kallpa.com", "admin@kallpa.com"];
 
 export function PersonalInfoForm() {
@@ -19,7 +19,6 @@ export function PersonalInfoForm() {
     password: "",
   });
 
-  // Verificar si es una cuenta especial que no puede editar perfil
   const isHardcodedAccount = useMemo(() => {
     return HARDCODED_ACCOUNTS.includes(userEmail.toLowerCase());
   }, [userEmail]);
@@ -126,7 +125,6 @@ export function PersonalInfoForm() {
       title="Información Personal"
       description="Actualiza tus datos personales"
     >
-      {/* Mensaje de advertencia para cuentas especiales */}
       {isHardcodedAccount && (
         <div className="mb-5 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
           <FiAlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
@@ -144,79 +142,74 @@ export function PersonalInfoForm() {
       <form onSubmit={handleSubmit}>
         <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
           <div className="w-full sm:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
-              Nombre
-            </label>
-            <input
-              className="w-full rounded-[7px] border border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-              type="text"
+            <InputGroup
+              label="Nombre"
               name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
+              type="text"
               placeholder="Tu nombre"
+              value={formData.firstName}
+              handleChange={handleChange}
               disabled={isHardcodedAccount}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
           </div>
 
           <div className="w-full sm:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
-              Apellido
-            </label>
-            <input
-              className="w-full rounded-[7px] border border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-              type="text"
+            <InputGroup
+              label="Apellido"
               name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
+              type="text"
               placeholder="Tu apellido"
+              value={formData.lastName}
+              handleChange={handleChange}
               disabled={isHardcodedAccount}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
           </div>
         </div>
 
         <div className="mb-5.5">
-          <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
-            Teléfono
-          </label>
-          <input
-            className="w-full rounded-[7px] border border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            type="text"
+          <InputGroup
+            label="Teléfono"
             name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="099..."
-            disabled={isHardcodedAccount}
-          />
-        </div>
-
-        <div className="mb-5.5">
-          <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
-            Dirección
-          </label>
-          <input
-            className="w-full rounded-[7px] border border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
             type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            placeholder="Tu dirección"
+            placeholder="099..."
+            value={formData.phone}
+            handleChange={handleChange}
             disabled={isHardcodedAccount}
+            iconPosition="left"
+            icon={<FiPhone className="text-gray-400" size={18} />}
           />
         </div>
 
         <div className="mb-5.5">
-          <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
-            Contraseña <span className="text-red-500">*</span>
-          </label>
-          <input
-            className="w-full rounded-[7px] border border-stroke bg-transparent px-5.5 py-3 text-dark outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Ingresa tu contraseña para guardar"
-            required={!isHardcodedAccount}
+          <InputGroup
+            label="Dirección"
+            name="address"
+            type="text"
+            placeholder="Tu dirección"
+            value={formData.address}
+            handleChange={handleChange}
             disabled={isHardcodedAccount}
+            iconPosition="left"
+            icon={<FiMapPin className="text-gray-400" size={18} />}
+          />
+        </div>
+
+        <div className="mb-5.5">
+          <InputGroup
+            label="Contraseña *"
+            name="password"
+            type="password"
+            placeholder="Ingresa tu contraseña para guardar"
+            value={formData.password}
+            handleChange={handleChange}
+            disabled={isHardcodedAccount}
+            required={!isHardcodedAccount}
+            iconPosition="left"
+            icon={<FiLock className="text-gray-400" size={18} />}
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Requerida para sincronizar con el sistema
@@ -236,3 +229,4 @@ export function PersonalInfoForm() {
     </ShowcaseSection>
   );
 }
+

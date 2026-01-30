@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { participantService } from "@/services/participant.service";
 import { Select } from "../FormElements/select";
-import { FiSave, FiUserPlus, FiUsers } from "react-icons/fi";
+import { FiCalendar, FiCreditCard, FiMail, FiMapPin, FiPhone, FiSave, FiUser, FiUserPlus, FiUsers } from "react-icons/fi";
 import { Alert } from "@/components/ui-elements/alert";
 import ErrorMessage from "../FormElements/errormessage";
 import { ShowcaseSection } from "../Layouts/showcase-section";
@@ -63,9 +63,7 @@ export const RegisterParticipantForm = () => {
     { value: "", label: "Seleccione un tipo" },
     { value: "ESTUDIANTE", label: "Estudiante" },
     { value: "DOCENTE", label: "Docente" },
-    { value: "TRABAJADOR", label: "Trabajador" },
     { value: "EXTERNO", label: "Externo" },
-    { value: "PARTICIPANTE", label: "Participante General" },
   ];
   const TypeOptions = [
     { value: "", label: "Seleccione un programa" },
@@ -84,6 +82,23 @@ export const RegisterParticipantForm = () => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+    // Validación de campos requeridos antes de enviar
+    const validationErrors: Record<string, string> = {};
+
+    if (!formData.type || formData.type === "") {
+      validationErrors.type = "Debe seleccionar un tipo de participante";
+    }
+
+    if (!formData.program || formData.program === "") {
+      validationErrors.program = "Debe seleccionar un programa";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
 
     const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
     if (isMinor && formData.program === "FUNCIONAL") {
@@ -172,6 +187,8 @@ export const RegisterParticipantForm = () => {
               placeholder="Ej. Juan"
               value={formData.firstName}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.firstName} />
           </div>
@@ -184,6 +201,8 @@ export const RegisterParticipantForm = () => {
               placeholder="Ej. Pérez"
               value={formData.lastName}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.lastName} />
           </div>
@@ -198,6 +217,8 @@ export const RegisterParticipantForm = () => {
               placeholder="110XXXXXXX"
               value={formData.dni}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCreditCard className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.dni} />
           </div>
@@ -210,6 +231,8 @@ export const RegisterParticipantForm = () => {
               placeholder="25"
               value={formData.age}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCalendar className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.age} />
           </div>
@@ -237,18 +260,22 @@ export const RegisterParticipantForm = () => {
               placeholder="john@example.com"
               value={formData.email}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiMail className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.email} />
           </div>
 
           <div className="w-full xl:w-1/2">
             <InputGroup
-              label="Phone Number"
+              label="Teléfono"
               name="phone"
               type="number"
-              placeholder="+593 999 000 000"
+              placeholder="099XXXXXXX"
               value={formData.phone}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiPhone className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.phone} />
           </div>
@@ -271,10 +298,12 @@ export const RegisterParticipantForm = () => {
             label="Dirección"
             name="address"
             type="text"
-            placeholder="Street address, City, State"
+            placeholder="Ej. Av. Universitaria y Calle Principal"
             className="w-full"
             value={formData.address}
             handleChange={handleChange}
+            iconPosition="left"
+            icon={<FiMapPin className="text-gray-400" size={18} />}
           />
         </div>
 

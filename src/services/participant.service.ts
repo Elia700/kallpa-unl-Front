@@ -229,12 +229,11 @@ export const participantService = {
 
   // Método para crear participante y manejar errores del backend
   async createParticipant(data: any) {
-    const isMinor = data.age < 18 || data.type === "INICIACION";
+    const age = Number(data.age);
+    const isMinor = age > 0 && age < 18;
 
     const payload = isMinor
       ? {
-        type: "INICIACION",
-        program: data.program,
         participant: {
           firstName: data.firstName,
           lastName: data.lastName,
@@ -243,6 +242,8 @@ export const participantService = {
           phone: data.phone || "",
           email: data.email || "",
           address: data.address || "",
+          type: data.type,
+          program: data.program,
         },
         responsible: {
           name: data.responsibleName,
@@ -261,6 +262,8 @@ export const participantService = {
         type: data.type,
         program: data.program,
       };
+
+    console.log("Payload enviado:", JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${API_URL}/save-participants`, {
       method: "POST",
