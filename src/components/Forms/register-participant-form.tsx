@@ -63,9 +63,7 @@ export const RegisterParticipantForm = () => {
     { value: "", label: "Seleccione un tipo" },
     { value: "ESTUDIANTE", label: "Estudiante" },
     { value: "DOCENTE", label: "Docente" },
-    { value: "TRABAJADOR", label: "Trabajador" },
     { value: "EXTERNO", label: "Externo" },
-    { value: "PARTICIPANTE", label: "Participante General" },
   ];
   const TypeOptions = [
     { value: "", label: "Seleccione un programa" },
@@ -84,6 +82,23 @@ export const RegisterParticipantForm = () => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+    // Validación de campos requeridos antes de enviar
+    const validationErrors: Record<string, string> = {};
+
+    if (!formData.type || formData.type === "") {
+      validationErrors.type = "Debe seleccionar un tipo de participante";
+    }
+
+    if (!formData.program || formData.program === "") {
+      validationErrors.program = "Debe seleccionar un programa";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
 
     const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
     if (isMinor && formData.program === "FUNCIONAL") {
