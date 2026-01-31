@@ -30,7 +30,6 @@ const API_URL = "http://localhost:5000/api";
       if (token) {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-        document.cookie = `token=${token}; path=/; max-age=86400;`;
       }
 
       return data;

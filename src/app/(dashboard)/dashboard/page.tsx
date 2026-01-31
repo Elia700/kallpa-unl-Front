@@ -1,8 +1,8 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useState, useEffect } from "react";
 import { OverviewCardsGroup } from "./_components/overview-cards";
 import { RecentActivity } from "./_components/activity/recent-activity";
-import { PendingPhysicalTests } from "./_components/activity/pending-test";
-import MeasurementStats from "./_components/activity/measurement-stats";
 
 type PropsType = {
   searchParams: Promise<{
@@ -10,7 +10,22 @@ type PropsType = {
   }>;
 };
 
-export default async function Home({ searchParams }: PropsType) {
+export default function Home({ searchParams }: PropsType) {
+  const [serverDown, setServerDown] = useState(false);
+
+  useEffect(() => {
+    const handleServerDown = () => {
+      setServerDown(true);
+    };
+
+    window.addEventListener("SERVER_DOWN", handleServerDown);
+    return () => window.removeEventListener("SERVER_DOWN", handleServerDown);
+  }, []);
+
+  if (serverDown) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <Suspense fallback={null}>
@@ -19,13 +34,8 @@ export default async function Home({ searchParams }: PropsType) {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Suspense fallback={null}>
-          <div className="xl:col-span-1">
+          <div className="col-span-full">
             <RecentActivity />
-          </div>
-
-          <div className="flex flex-col gap-6 xl:col-span-2">
-            <MeasurementStats/>
-            {/* <PendingPhysicalTests /> */}
           </div>
         </Suspense>
       </div>

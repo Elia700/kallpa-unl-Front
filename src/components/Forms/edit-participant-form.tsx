@@ -66,8 +66,12 @@ export const EditParticipantForm = ({ participantId }: EditParticipantFormProps)
             dni: participant.dni || "",
           });
         }
-      } catch (error) {
-        showTemporaryAlert("error", "Error", "No se pudo cargar el participante");
+      } catch (error: any) {
+        if (!error.response) {
+          console.error("No response fetching participant", error);
+        } else {
+          showTemporaryAlert("error", "Error", "No se pudo cargar el participante");
+        }
       } finally {
         setLoading(false);
       }
@@ -108,27 +112,32 @@ export const EditParticipantForm = ({ participantId }: EditParticipantFormProps)
         formData
       );
 
-      if (response.code === 200) {
-        showTemporaryAlert("success", "Éxito", "Participante actualizado correctamente");
-        setTimeout(() => {
-          router.push("/pages/participant");
-        }, 1500);
-      }
-
-      if (response.code === 400 && response.data) {
-        setErrors(response.data);
-      }
-
-      if (response.code === 404) {
-        showTemporaryAlert("error", "Error", "Participante no encontrado");
+      if (response) {
+        if (response.code === 200) {
+          showTemporaryAlert("success", "Éxito", "Participante actualizado correctamente");
+          setTimeout(() => router.push("/pages/participant"), 1500);
+        } else if (response.code === 400 && response.data) {
+          setErrors(response.data);
+        } else if (response.code === 404) {
+          showTemporaryAlert("error", "Error", "Participante no encontrado");
+        }
       }
     } catch (error: any) {
+      const isNetworkError = error instanceof TypeError || error.message?.includes("Failed to fetch");
+
+      if (isNetworkError) {
+        console.log("Error de red manejado globalmente");
+        return;
+      }
+
       if (error.response) {
         const { data } = error.response;
         if (data && data.errors) {
           setErrors(data.errors);
+          return;
         }
       }
+
       showTemporaryAlert("error", "Error", "Error al actualizar el participante");
     } finally {
       setIsSaving(false);
@@ -148,14 +157,15 @@ export const EditParticipantForm = ({ participantId }: EditParticipantFormProps)
       icon={<FiEdit size={24} />}
       title="Editar Participante"
       description="Modifica los datos del participante"
+      badgeText={"Modo Edición"}
     >
       {showAlert && (
         <div className="mb-6">
           <Alert variant={alertType} title={alertTitle} description={alertDescription} />
         </div>
       )}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6 lg:flex-row">
-        <div className="flex-grow lg:w-2/3">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="w-full">
           <div className="mb-4.5 grid grid-cols-1 gap-6 xl:grid-cols-2">
             <div>
               <InputGroup
@@ -259,32 +269,13 @@ export const EditParticipantForm = ({ participantId }: EditParticipantFormProps)
             <ErrorMessage message={errors.address} />
           </div>
         </div>
-        <div className="flex w-full flex-col gap-6 lg:w-1/3">
-          <div className="relative overflow-hidden rounded-2xl border border-blue/20 bg-white/10 p-6 shadow-xl dark:border-white/5 dark:bg-[#1a2233]">
-            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-600/10 blur-3xl"></div>
-
-            <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-dark dark:text-white">
-              <FiInfo className="text-primary" />
-              Información
-            </h4>
-
-            <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-              Actualiza los datos del participante. Asegúrese de que el <strong>DNI</strong> y el <strong>Correo</strong> sean correctos, ya que son campos únicos.
-            </p>
-
-            <ul className="mt-4 space-y-2 text-xs text-gray-500 dark:text-gray-400">
-              <li>• Los campos <b>DNI</b> y <b>Correo</b> deben ser únicos.</li>
-              <li>• La edad debe estar entre 1 y 80 años.</li>
-              <li>• El teléfono debe tener 10 dígitos.</li>
-            </ul>
-          </div>
-
+        <div className="flex w-full flex-col gap-6">
           <Button
             type="submit"
             disabled={isSaving}
-            label={isSaving ? "Guardando..." : "Guardar Cambios"}
+            label={isSaving ? "Actualizando..." : "Actualizar Cambios"}
             shape="rounded"
-            icon={!isSaving ? <FiSave className="h-5 w-5" /> : undefined}
+            icon={!isSaving ? <FiSave size={24} /> : undefined}
           />
         </div>
       </form>

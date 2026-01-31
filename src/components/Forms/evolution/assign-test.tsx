@@ -42,8 +42,8 @@ export function AssignTest() {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        const apiTests = await getTests();
-        const apiParticipants = await getParticipants();
+        const apiTests = await getTests() ?? [];
+        const apiParticipants = await getParticipants()?? [];
 
         const activeTests = apiTests
           .filter((t: any) => t.status === "Activo")
@@ -58,7 +58,7 @@ export function AssignTest() {
 
         setAssessments(tableData);
       } catch (error) {
-        setError("Ocurrió un problema con el servidor");
+        console.log("Error loading tests or participants:", error);
       } finally {
         setLoading(false);
       }
@@ -182,7 +182,7 @@ export function AssignTest() {
               </>
             ) : (
               <p className="text-sm italic text-slate-500 dark:text-slate-400">
-                Ningún test o participante seleccionado
+                Ninguna evaluación o participante seleccionado
               </p>
             )}
           </div>
@@ -237,7 +237,13 @@ export function AssignTest() {
                       () => setAlert({ type: null, message: "" }),
                       3000,
                     );
-                  } catch (error) {
+                  } catch (error: any) {
+                    // Si no llega respuesta del servidor, dejar que el handler global muestre mantenimiento
+                    if (!error.response) {
+                      console.error("No response from server on register test", error);
+                      return;
+                    }
+
                     setAlert({
                       type: "error",
                       message: "Error al registrar el test.",

@@ -83,44 +83,38 @@ export const RegisterParticipantForm = () => {
     setLoading(true);
     setErrors({});
 
-    // Validación de campos requeridos antes de enviar
-    const validationErrors: Record<string, string> = {};
-
-    if (!formData.type || formData.type === "") {
-      validationErrors.type = "Debe seleccionar un tipo de participante";
-    }
-
-    if (!formData.program || formData.program === "") {
-      validationErrors.program = "Debe seleccionar un programa";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      setLoading(false);
-      return;
-    }
-
-    const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
-    if (isMinor && formData.program === "FUNCIONAL") {
-      setErrors((prev) => ({
-        ...prev,
-        program:
-          "Los participantes menores de 18 años no pueden inscribirse en el programa Funcional.",
-      }));
-      triggerAlert(
-        "error",
-        "Restricción de edad",
-        "Los menores de 18 años no pueden inscribirse en el programa Funcional.",
-      );
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await participantService.createParticipant({
         ...formData,
         age: formData.age ? parseInt(formData.age) : 0,
       });
+
+      if (!response) {
+        window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+          detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+        }));
+        setLoading(false);
+        return;
+      }
+
+      if (response.code === 400 && response.data) {
+        setErrors(response.data);
+        setLoading(false);
+        return;
+      }
+
+      // Si la validación del servidor falla pero no hay datos específicos
+      if (!response.success && response.code !== 200) {
+        setErrors({});
+        triggerAlert(
+          "error",
+          "Error al registrar",
+          response.msg || "No se pudo registrar el participante.",
+        );
+        setLoading(false);
+        return;
+      }
+
       triggerAlert(
         "success",
         "Participante registrado",
@@ -142,21 +136,12 @@ export const RegisterParticipantForm = () => {
         program: "",
       });
     } catch (err: any) {
-      if (err?.data && typeof err.data === "object") {
-        setErrors(err.data);
-        const hasFieldErrors = Object.keys(err.data).some(
-          (key) => key !== "general" && err.data[key],
-        );
-        if (!hasFieldErrors && err.msg) {
-          triggerAlert("error", "Error al registrar", err.msg);
-        }
-      } else {
-        triggerAlert(
-          "error",
-          "Error al registrar",
-          "No se pudo registrar el participante.",
-        );
-      }
+      console.error("Error inesperado:", err);
+      triggerAlert(
+        "error",
+        "Error al registrar",
+        "Ocurrió un error inesperado. Intenta nuevamente.",
+      );
     } finally {
       setLoading(false);
     }
@@ -372,9 +357,9 @@ export const RegisterParticipantForm = () => {
           type="submit"
           disabled={loading}
           label={loading ? "Guardando..." : "Registrar Participante"}
-          icon={!loading ? <FiSave size={20} /> : undefined}
-          variant="primary"
+          icon={!loading ? <FiSave size={24} /> : undefined}
           className="mt-6 w-full"
+          shape="rounded"
         />
       </form>
     </ShowcaseSection>

@@ -1,56 +1,5 @@
-// import { FiUser, FiBarChart2, FiCheckCircle } from "react-icons/fi";
-
-// const activities = [
-//   { id: 1, type: 'REGISTRO', title: 'Nuevo Usuario', desc: 'Juan Pérez registrado en el sistema.', time: 'Hace 5m', icon: FiUser, color: 'text-blue-500', bg: 'bg-blue-50' },
-//   { id: 2, type: 'MEDICION', title: 'Medición Completada', desc: 'Actualización de medidas para María G.', time: 'Hace 24m', icon: FiCheckCircle, color: 'text-orange-500', bg: 'bg-orange-50' },
-//   { id: 3, type: 'PRUEBA', title: 'Prueba Física', desc: 'Carlos R. finalizó Test de Cooper.', time: 'Hace 1h', icon: FiBarChart2, color: 'text-purple-500', bg: 'bg-purple-50' },
-// ];
-
-// export function RecentActivity() {
-//   return (
-//     <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2233] w-full">
-//       <div className="mb-6 flex items-center justify-between">
-//         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Actividad Reciente</h3>
-//         <button className="text-sm font-medium text-blue-500 hover:underline">Ver todo</button>
-//       </div>
-
-//       <div className="space-y-6">
-//         {activities.map((item) => (
-//           <div key={item.id} className="flex gap-4 w-full">
-//             {/* Contenedor del Icono */}
-//             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white dark:bg-white shadow-sm`}>
-//                <item.icon size={22} className={item.color} />
-//             </div>
-
-//             {/* Contenedor de Información - flex-1 es la clave aquí */}
-//             <div className="flex flex-1 flex-col gap-1">
-//               <div className="flex items-start justify-between w-full">
-//                 <span className="font-bold text-slate-900 dark:text-white text-base">
-//                   {item.title}
-//                 </span>
-//                 <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
-//                   {item.time}
-//                 </span>
-//               </div>
-              
-//               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-//                 {item.desc}
-//               </p>
-
-//               {/* Etiqueta (Badge) corregida según la imagen */}
-//               <div className="mt-1">
-//                 <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-opacity-20 ${item.bg} ${item.color} border border-current border-opacity-10`}>
-//                   {item.type}
-//                 </span>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 "use client"
+
 import { useEffect, useState } from "react";
 import { FiUser, FiBarChart2, FiCheckCircle } from "react-icons/fi";
 import { RecentActivities } from "@/services/activity.service";
@@ -63,6 +12,16 @@ export function RecentActivity() {
     async function fetchActivities() {
       try {
         const data = await RecentActivities.getRecent();
+        
+        // Si data es undefined, fue error de red, disparar evento SERVER_DOWN
+        if (data === undefined) {
+          window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+            detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+          }));
+          setLoading(false);
+          return;
+        }
+        
         setActivities(data);
       } catch (err) {
         console.error("Error al cargar actividades:", err);
@@ -74,51 +33,47 @@ export function RecentActivity() {
     fetchActivities();
   }, []);
 
-  if (loading) return <p>Cargando actividades...</p>;
+  // No mostrar nada mientras carga, dejar que se renderice vacío
+  if (loading) return null;
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2233] w-full">
+    <div className="rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-sm w-full">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           Actividad Reciente
         </h3>
-        <button className="text-sm font-medium text-blue-500 hover:underline">
-          Ver todo
-        </button>
       </div>
 
       <div className="space-y-6">
         {activities.map((item) => {
-          // Puedes asignar iconos según el type
           let IconComponent = FiUser;
           if (item.type === "MEDICION") IconComponent = FiCheckCircle;
           if (item.type === "PRUEBA") IconComponent = FiBarChart2;
 
           return (
             <div key={item.id} className="flex gap-4 w-full">
-              <div
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white dark:bg-white shadow-sm`}
-              >
-                <IconComponent size={22} className="text-blue-500" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 shadow-sm">
+                <IconComponent size={22} className="text-blue-600 dark:text-blue-400" />
               </div>
 
               <div className="flex flex-1 flex-col gap-1">
                 <div className="flex items-start justify-between w-full">
-                  <span className="font-bold text-slate-900 dark:text-white text-base">
+                  <span className="font-bold text-gray-900 dark:text-white text-base">
                     {item.title}
                   </span>
-                  <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">
                     {new Date(item.created_at).toLocaleString()}
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                   {item.description}
                 </p>
 
                 <div className="mt-1">
                   <span
-                    className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-500 border border-current border-opacity-10`}
+                    className="rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider 
+                               bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border border-current border-opacity-10"
                   >
                     {item.type}
                   </span>

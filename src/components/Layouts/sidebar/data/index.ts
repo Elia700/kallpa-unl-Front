@@ -63,7 +63,7 @@ export const NAV_DATA: NavSection[] = [
         items: [
           {
             title: "Registrar",
-            url: "/anthropometric/form",
+            url: "/anthropometric",
             roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
           },
         ],

@@ -35,7 +35,7 @@ export function ListTest() {
     const fetchTests = async () => {
       try {
         const data = await getTests();
-        setEvaluations(data);
+        setEvaluations(data ?? []);
       } catch (error) {
         console.error("Error al cargar evaluaciones:", error);
       } finally {

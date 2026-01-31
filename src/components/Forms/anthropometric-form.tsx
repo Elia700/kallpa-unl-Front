@@ -95,6 +95,12 @@ export function AnthropometricForm() {
     try {
       const response = await saveAssessment(data);
 
+      // Si la respuesta es undefined, fue un error manejado globalmente (SERVER_DOWN)
+      if (!response) {
+        setIsSaving(false);
+        return;
+      }
+
       if (response.code === 200) {
         setBmi(response.data.bmi);
         setStatus(response.data.status);
@@ -111,19 +117,22 @@ export function AnthropometricForm() {
         setErrors(response.errors);
       }
     } catch (error: any) {
-      if (error.response) {
-        const { data } = error.response;
-        if (data && data.errors) {
-          setErrors(data.errors);
-        }
-      } else if (error.request) {
-        console.log("No se pudo conectar al servidor");
-      } else {
-        console.log("Error desconocido:", error.message);
+      // Si no hay respuesta del servidor, usamos el manejador global (SERVER_DOWN)
+      if (!error.response) {
+        console.error("No se pudo conectar al servidor", error);
+        return;
       }
+
+      const { data } = error.response;
+      if (data && data.errors) {
+        setErrors(data.errors);
+        return;
+      }
+
+      // Otros errores respondidos por el servidor
       setAlertType("error");
       setAlertTitle("Error");
-      setAlertDescription("No se pudo guardar la evaluación.");
+      setAlertDescription(data?.msg || "No se pudo guardar la evaluación.");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
     } finally {
@@ -195,6 +204,7 @@ export function AnthropometricForm() {
         <div className="flex-grow lg:w-2/3">
           <div className="mb-4.5 flex flex-col gap-4.5 xl:flex-row">
             <div className="flex-grow">
+            <div className="flex flex-col gap-2">
               <div className="flex items-end gap-2">
                 <div className="flex-grow">
                   <InputGroup
@@ -213,14 +223,9 @@ export function AnthropometricForm() {
                           className="absolute right-0 top-0 flex h-full w-[50px] items-center justify-center rounded-r-lg bg-primary text-white hover:bg-opacity-90"
                           onClick={async () => {
                             setIsModalOpen(true);
-                            try {
-                              const data = await getParticipants();
+                            const data = await getParticipants();
+                            if (data) {
                               setParticipants(data);
-                            } catch (error) {
-                              console.error(
-                                "Error cargando participantes:",
-                                error,
-                              );
                             }
                           }}
                         >
@@ -232,6 +237,7 @@ export function AnthropometricForm() {
                 </div>
               </div>
               <ErrorMessage message={errors.participant_external_id} />
+              </div>
             </div>
             <div className="w-full xl:w-1/2">
               <DatePickerTwo
@@ -510,8 +516,8 @@ export function AnthropometricForm() {
               <Button
                 label={isSaving ? "Guardando..." : "Calcular y Guardar"}
                 icon={
-                  <div className="flex items-center justify-center rounded-lg bg-white/10 p-1.5 group-hover:bg-white/20">
-                    <FiSave size={18} />
+                  <div className="flex items-center justify-center">
+                    <FiSave size={24} />
                   </div>
                 }
                 variant="primary"
