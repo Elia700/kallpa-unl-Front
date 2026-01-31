@@ -1,104 +1,113 @@
+import { NavSection } from "@/types/auth";
 import * as Icons from "../icons";
-
-export const NAV_DATA = [
+export type Role = "DOCENTE" | "PASANTE" | "admin";
+export const NAV_DATA: NavSection[] = [
   {
-    label: "MAIN MENU",
+    label: "MENU PRINCIPAL",
     items: [
       {
         title: "Dashboard",
         icon: Icons.HomeIcon,
+        roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"],
+        url: "/dashboard",
         items: [
-          {
-            title: "eCommerce",
-            url: "/",
-          },
+          // {
+          //   title: "Inicio",
+          //   url: "/dashboard",
+          // },
         ],
       },
       {
-        title: "Calendar",
-        url: "/calendar",
-        icon: Icons.Calendar,
-        items: [],
-      },
-      {
-        title: "Profile",
-        url: "/profile",
+        title: "Participantes",
         icon: Icons.User,
+        roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"],
+        items: [
+          {
+            title: "Lista Participantes",
+            url: "/pages/participant",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+          {
+            title: "Registrar Nuevo",
+            url: "/pages/participant/register",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+        ],
+      },
+      {
+        title: "Asistencia",
+        icon: Icons.Calendar,
+        roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"],
+        items: [
+          {
+            title: "Sesiones",
+            url: "/pages/attendance",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+          {
+            title: "Programar Sesión",
+            url: "/pages/attendance/programar",
+            roles: ["ADMINISTRADOR", "DOCENTE"]
+          },
+          {
+            title: "Historial",
+            url: "/pages/attendance/historial",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+        ],
+      },
+      {
+        title: "Medidas Antro",
+        icon: Icons.TapeMeasureIcon,
+        roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"],
+        items: [
+          {
+            title: "Registrar",
+            url: "/anthropometric",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+        ],
+      },
+      {
+        title: "Evaluaciones",
+        icon: Icons.DumbbellIcon,
+        roles: ["PASANTE"],
+        items: [
+          {
+            title: "Crear Evaluación",
+            url: "/evolution/form-test",
+            roles: ["ADMINISTRADOR", "DOCENTE"]
+          },
+          {
+            title: "Aplicar Evaluación",
+            url: "/evolution/assign-test",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+          {
+            title: "Evaluaciones Registradas",
+            url: "/evolution/list-test",
+            roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"]
+          },
+        ],
+      },
+      {
+        title: "Ver progreso",
+        url: "/history/measurements",
+        icon: Icons.ProgressIcon,
+        roles: ["PASANTE", "ADMINISTRADOR", "DOCENTE"],
         items: [],
-      },
-      {
-        title: "Forms",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Form Elements",
-            url: "/forms/form-elements",
-          },
-          {
-            title: "Form Layout",
-            url: "/forms/form-layout",
-          },
-        ],
-      },
-      {
-        title: "Tables",
-        url: "/tables",
-        icon: Icons.Table,
-        items: [
-          {
-            title: "Tables",
-            url: "/tables",
-          },
-        ],
-      },
-      {
-        title: "Pages",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Settings",
-            url: "/pages/settings",
-          },
-        ],
       },
     ],
   },
   {
-    label: "OTHERS",
+    label: "OTROS",
     items: [
       {
-        title: "Charts",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Basic Chart",
-            url: "/charts/basic-chart",
-          },
-        ],
-      },
-      {
-        title: "UI Elements",
-        icon: Icons.FourCircle,
-        items: [
-          {
-            title: "Alerts",
-            url: "/ui-elements/alerts",
-          },
-          {
-            title: "Buttons",
-            url: "/ui-elements/buttons",
-          },
-        ],
-      },
-      {
-        title: "Authentication",
-        icon: Icons.Authentication,
-        items: [
-          {
-            title: "Sign In",
-            url: "/auth/sign-in",
-          },
-        ],
+        title: "Usuarios",
+        url: "/pages/user",
+        icon: Icons.User,
+        roles: ["ADMINISTRADOR"],
+        items: [],
       },
     ],
   },

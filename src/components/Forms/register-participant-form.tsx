@@ -1,0 +1,367 @@
+"use client";
+import React, { useState } from "react";
+import InputGroup from "@/components/FormElements/InputGroup";
+import { participantService } from "@/services/participant.service";
+import { Select } from "../FormElements/select";
+import { FiCalendar, FiCreditCard, FiMail, FiMapPin, FiPhone, FiSave, FiUser, FiUserPlus, FiUsers } from "react-icons/fi";
+import { Alert } from "@/components/ui-elements/alert";
+import ErrorMessage from "../FormElements/errormessage";
+import { ShowcaseSection } from "../Layouts/showcase-section";
+import { Button } from "@/components/ui-elements/button";
+
+export const RegisterParticipantForm = () => {
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertVariant, setAlertVariant] = useState<
+    "success" | "error" | "warning"
+  >("success");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertDescription, setAlertDescription] = useState("");
+  const triggerAlert = (
+    variant: "success" | "error" | "warning",
+    title: string,
+    description: string,
+  ) => {
+    setAlertVariant(variant);
+    setAlertTitle(title);
+    setAlertDescription(description);
+    setShowAlert(true);
+
+    setTimeout(() => {
+      setShowAlert(false);
+    }, 3000);
+  };
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    dni: "",
+    type: "",
+    phone: "",
+    address: "",
+    age: "",
+    email: "",
+    program: "",
+
+    //SOLO PARA MENORES
+    responsibleName: "",
+    responsibleDni: "",
+    responsiblePhone: "",
+  });
+
+  const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
+  const clearFieldError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const participantTypeOptions = [
+    { value: "", label: "Seleccione un tipo" },
+    { value: "ESTUDIANTE", label: "Estudiante" },
+    { value: "DOCENTE", label: "Docente" },
+    { value: "EXTERNO", label: "Externo" },
+  ];
+  const TypeOptions = [
+    { value: "", label: "Seleccione un programa" },
+    { value: "INICIACION", label: "Iniciación" },
+    { value: "FUNCIONAL", label: "Funcional" },
+  ];
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    clearFieldError(name);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response = await participantService.createParticipant({
+        ...formData,
+        age: formData.age ? parseInt(formData.age) : 0,
+      });
+
+      if (!response) {
+        window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+          detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+        }));
+        setLoading(false);
+        return;
+      }
+
+      if (response.code === 400 && response.data) {
+        setErrors(response.data);
+        setLoading(false);
+        return;
+      }
+
+      // Si la validación del servidor falla pero no hay datos específicos
+      if (!response.success && response.code !== 200) {
+        setErrors({});
+        triggerAlert(
+          "error",
+          "Error al registrar",
+          response.msg || "No se pudo registrar el participante.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      triggerAlert(
+        "success",
+        "Participante registrado",
+        "El participante se registró correctamente.",
+      );
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        dni: "",
+        type: "ESTUDIANTE",
+        phone: "",
+        address: "",
+        age: "",
+        email: "",
+        responsibleName: "",
+        responsibleDni: "",
+        responsiblePhone: "",
+        program: "",
+      });
+    } catch (err: any) {
+      console.error("Error inesperado:", err);
+      triggerAlert(
+        "error",
+        "Error al registrar",
+        "Ocurrió un error inesperado. Intenta nuevamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ShowcaseSection
+      icon={<FiUserPlus size={24} />}
+      title="Registro de Participante"
+      description="Ingresa los datos para un nuevo perfil"
+    >
+      {showAlert && (
+        <div className="mb-6">
+          <Alert
+            variant={alertVariant}
+            title={alertTitle}
+            description={alertDescription}
+          />
+        </div>
+      )}
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+          <div className="w-full xl:w-1/2">
+            <InputGroup
+              label="Nombres"
+              name="firstName"
+              type="text"
+              placeholder="Ej. Juan"
+              value={formData.firstName}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.firstName} />
+          </div>
+
+          <div className="w-full xl:w-1/2">
+            <InputGroup
+              label="Apellidos"
+              name="lastName"
+              type="text"
+              placeholder="Ej. Pérez"
+              value={formData.lastName}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.lastName} />
+          </div>
+        </div>
+
+        <div className="mb-4.5 grid grid-cols-1 gap-6 xl:grid-cols-12 xl:items-end">
+          <div className="xl:col-span-5">
+            <InputGroup
+              label="Cédula"
+              name="dni"
+              type="number"
+              placeholder="110XXXXXXX"
+              value={formData.dni}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCreditCard className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.dni} />
+          </div>
+
+          <div className="xl:col-span-2">
+            <InputGroup
+              label="Edad"
+              name="age"
+              type="number"
+              placeholder="25"
+              value={formData.age}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCalendar className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.age} />
+          </div>
+
+          <div className="xl:col-span-5">
+            <Select
+              name="type"
+              label="Tipo"
+              items={participantTypeOptions}
+              placeholder=""
+              value={formData.type}
+              onChange={(e) => handleChange(e)}
+              className="w-full"
+            />
+            <ErrorMessage message={errors.type} />
+          </div>
+        </div>
+
+        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+          <div className="w-full xl:w-1/2">
+            <InputGroup
+              label="Correo electrónico"
+              name="email"
+              type="email"
+              placeholder="john@example.com"
+              value={formData.email}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiMail className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.email} />
+          </div>
+
+          <div className="w-full xl:w-1/2">
+            <InputGroup
+              label="Teléfono"
+              name="phone"
+              type="number"
+              placeholder="099XXXXXXX"
+              value={formData.phone}
+              handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiPhone className="text-gray-400" size={18} />}
+            />
+            <ErrorMessage message={errors.phone} />
+          </div>
+        </div>
+
+        <div className="xl:col-span-5">
+          <Select
+            name="program"
+            label="Seleccione un programa"
+            items={TypeOptions}
+            placeholder=""
+            value={formData.program}
+            onChange={(e) => handleChange(e)}
+            className="w-full"
+          />
+          <ErrorMessage message={errors.program} />
+        </div>
+        <div className="mb-4.5">
+          <InputGroup
+            label="Dirección"
+            name="address"
+            type="text"
+            placeholder="Ej. Av. Universitaria y Calle Principal"
+            className="w-full"
+            value={formData.address}
+            handleChange={handleChange}
+            iconPosition="left"
+            icon={<FiMapPin className="text-gray-400" size={18} />}
+          />
+        </div>
+
+        <div className="relative mb-8 mt-10 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+          </div>
+          <div className="relative bg-white px-4 dark:bg-[#1a222c]">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+              Solo para menores de edad
+            </span>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-[#1e293b]/30">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <FiUsers size={18} />
+            </div>
+            <h4 className="text-base font-bold text-slate-900 dark:text-white">
+              Datos del Responsable
+            </h4>
+          </div>
+          <div className="mb-6 flex flex-col gap-6 xl:flex-row">
+            <div className="w-full xl:w-1/2">
+              <InputGroup
+                label="Nombre del Responsable"
+                name="responsibleName"
+                type="text"
+                placeholder="Ej. Carlos Pérez"
+                value={formData.responsibleName}
+                handleChange={handleChange}
+                disabled={!isMinor}
+              />
+              <ErrorMessage message={errors.responsibleName} />
+            </div>
+
+            <div className="w-full xl:w-1/2">
+              <InputGroup
+                label="Cédula del Responsable"
+                name="responsibleDni"
+                type="number"
+                placeholder="110XXXXXXX"
+                value={formData.responsibleDni}
+                handleChange={handleChange}
+                disabled={!isMinor}
+              />
+              <ErrorMessage message={errors.responsibleDni} />
+            </div>
+          </div>
+
+          <div className="w-full">
+            <InputGroup
+              label="Teléfono del Responsable"
+              name="responsiblePhone"
+              type="text"
+              placeholder="+593 999 000 000"
+              value={formData.responsiblePhone}
+              handleChange={handleChange}
+              disabled={!isMinor}
+            />
+            <ErrorMessage message={errors.responsiblePhone} />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          label={loading ? "Guardando..." : "Registrar Participante"}
+          icon={!loading ? <FiSave size={24} /> : undefined}
+          className="mt-6 w-full"
+          shape="rounded"
+        />
+      </form>
+    </ShowcaseSection>
+  );
+};

@@ -2,43 +2,65 @@
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+import { authService } from "@/services/auth.service";
 
 export default function SigninWithPassword() {
+  const router = useRouter();
+
   const [data, setData] = useState({
-    email: process.env.NEXT_PUBLIC_DEMO_USER_MAIL || "",
-    password: process.env.NEXT_PUBLIC_DEMO_USER_PASS || "",
+    email: "",
+    password: "",
     remember: false,
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({
       ...data,
       [e.target.name]: e.target.value,
     });
+    if (error) setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // You can remove this code block
     setLoading(true);
+    setError(null);
 
-    setTimeout(() => {
+    try {
+      await authService.login({
+        email: data.email,
+        password: data.password,
+      });
+      
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 100);
+    } catch (err: any) {
+      setError(err.message || "Credenciales inválidas. Intente nuevamente.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-500/50 bg-red-900/20 p-4 text-sm text-red-500">
+          {error}
+        </div>
+      )}
+
       <InputGroup
         type="email"
-        label="Email"
-        className="mb-4 [&_input]:py-[15px]"
-        placeholder="Enter your email"
+        label=""
+        className="mb-4 [&_input]:border-slate-700 [&_input]:bg-[#0f172a] [&_input]:py-[15px] [&_input]:text-white focus:[&_input]:border-[#5e5ce6]"
+        placeholder="Ingrese su email"
         name="email"
         handleChange={handleChange}
         value={data.email}
@@ -47,46 +69,23 @@ export default function SigninWithPassword() {
 
       <InputGroup
         type="password"
-        label="Password"
-        className="mb-5 [&_input]:py-[15px]"
-        placeholder="Enter your password"
+        label=""
+        className="mb-5 [&_input]:border-slate-700 [&_input]:bg-[#0f172a] [&_input]:py-[15px] [&_input]:text-white focus:[&_input]:border-[#5e5ce6]"
+        placeholder="Ingrese su contraseña"
         name="password"
         handleChange={handleChange}
         value={data.password}
         icon={<PasswordIcon />}
       />
-
-      <div className="mb-6 flex items-center justify-between gap-2 py-2 font-medium">
-        <Checkbox
-          label="Remember me"
-          name="remember"
-          withIcon="check"
-          minimal
-          radius="md"
-          onChange={(e) =>
-            setData({
-              ...data,
-              remember: e.target.checked,
-            })
-          }
-        />
-
-        <Link
-          href="/auth/forgot-password"
-          className="hover:text-primary dark:text-white dark:hover:text-primary"
-        >
-          Forgot Password?
-        </Link>
-      </div>
-
       <div className="mb-4.5">
         <button
           type="submit"
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+          disabled={loading}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#5e5ce6] p-4 font-medium text-white shadow-lg shadow-indigo-500/20 transition hover:bg-opacity-90"
         >
-          Sign In
+          {loading ? "Iniciando sesión..." : "Ingresar"}
           {loading && (
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-t-transparent dark:border-primary dark:border-t-transparent" />
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-t-transparent" />
           )}
         </button>
       </div>
