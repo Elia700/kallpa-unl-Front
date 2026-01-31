@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { participantService } from "@/services/participant.service";
 import { Select } from "../FormElements/select";
-import { FiSave, FiUserPlus, FiUsers } from "react-icons/fi";
+import { FiCalendar, FiCreditCard, FiMail, FiMapPin, FiPhone, FiSave, FiUser, FiUserPlus, FiUsers } from "react-icons/fi";
 import { Alert } from "@/components/ui-elements/alert";
 import ErrorMessage from "../FormElements/errormessage";
 import { ShowcaseSection } from "../Layouts/showcase-section";
+import { Button } from "@/components/ui-elements/button";
 
 export const RegisterParticipantForm = () => {
   const [loading, setLoading] = useState(false);
@@ -62,9 +63,7 @@ export const RegisterParticipantForm = () => {
     { value: "", label: "Seleccione un tipo" },
     { value: "ESTUDIANTE", label: "Estudiante" },
     { value: "DOCENTE", label: "Docente" },
-    { value: "TRABAJADOR", label: "Trabajador" },
     { value: "EXTERNO", label: "Externo" },
-    { value: "PARTICIPANTE", label: "Participante General" },
   ];
   const TypeOptions = [
     { value: "", label: "Seleccione un programa" },
@@ -84,27 +83,38 @@ export const RegisterParticipantForm = () => {
     setLoading(true);
     setErrors({});
 
-    const isMinor = Number(formData.age) > 0 && Number(formData.age) < 18;
-    if (isMinor && formData.program === "FUNCIONAL") {
-      setErrors((prev) => ({
-        ...prev,
-        program:
-          "Los participantes menores de 18 años no pueden inscribirse en el programa Funcional.",
-      }));
-      triggerAlert(
-        "error",
-        "Restricción de edad",
-        "Los menores de 18 años no pueden inscribirse en el programa Funcional.",
-      );
-      setLoading(false);
-      return;
-    }
-
     try {
       const response = await participantService.createParticipant({
         ...formData,
         age: formData.age ? parseInt(formData.age) : 0,
       });
+
+      if (!response) {
+        window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+          detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+        }));
+        setLoading(false);
+        return;
+      }
+
+      if (response.code === 400 && response.data) {
+        setErrors(response.data);
+        setLoading(false);
+        return;
+      }
+
+      // Si la validación del servidor falla pero no hay datos específicos
+      if (!response.success && response.code !== 200) {
+        setErrors({});
+        triggerAlert(
+          "error",
+          "Error al registrar",
+          response.msg || "No se pudo registrar el participante.",
+        );
+        setLoading(false);
+        return;
+      }
+
       triggerAlert(
         "success",
         "Participante registrado",
@@ -126,21 +136,12 @@ export const RegisterParticipantForm = () => {
         program: "",
       });
     } catch (err: any) {
-      if (err?.data && typeof err.data === "object") {
-        setErrors(err.data);
-        const hasFieldErrors = Object.keys(err.data).some(
-          (key) => key !== "general" && err.data[key],
-        );
-        if (!hasFieldErrors && err.msg) {
-          triggerAlert("error", "Error al registrar", err.msg);
-        }
-      } else {
-        triggerAlert(
-          "error",
-          "Error al registrar",
-          "No se pudo registrar el participante.",
-        );
-      }
+      console.error("Error inesperado:", err);
+      triggerAlert(
+        "error",
+        "Error al registrar",
+        "Ocurrió un error inesperado. Intenta nuevamente.",
+      );
     } finally {
       setLoading(false);
     }
@@ -171,6 +172,8 @@ export const RegisterParticipantForm = () => {
               placeholder="Ej. Juan"
               value={formData.firstName}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.firstName} />
           </div>
@@ -183,6 +186,8 @@ export const RegisterParticipantForm = () => {
               placeholder="Ej. Pérez"
               value={formData.lastName}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiUser className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.lastName} />
           </div>
@@ -197,6 +202,8 @@ export const RegisterParticipantForm = () => {
               placeholder="110XXXXXXX"
               value={formData.dni}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCreditCard className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.dni} />
           </div>
@@ -209,6 +216,8 @@ export const RegisterParticipantForm = () => {
               placeholder="25"
               value={formData.age}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiCalendar className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.age} />
           </div>
@@ -236,18 +245,22 @@ export const RegisterParticipantForm = () => {
               placeholder="john@example.com"
               value={formData.email}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiMail className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.email} />
           </div>
 
           <div className="w-full xl:w-1/2">
             <InputGroup
-              label="Phone Number"
+              label="Teléfono"
               name="phone"
               type="number"
-              placeholder="+593 999 000 000"
+              placeholder="099XXXXXXX"
               value={formData.phone}
               handleChange={handleChange}
+              iconPosition="left"
+              icon={<FiPhone className="text-gray-400" size={18} />}
             />
             <ErrorMessage message={errors.phone} />
           </div>
@@ -270,10 +283,12 @@ export const RegisterParticipantForm = () => {
             label="Dirección"
             name="address"
             type="text"
-            placeholder="Street address, City, State"
+            placeholder="Ej. Av. Universitaria y Calle Principal"
             className="w-full"
             value={formData.address}
             handleChange={handleChange}
+            iconPosition="left"
+            icon={<FiMapPin className="text-gray-400" size={18} />}
           />
         </div>
 
@@ -338,20 +353,14 @@ export const RegisterParticipantForm = () => {
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary p-[13px] font-bold text-white hover:bg-opacity-90"
-        >
-          {loading ? (
-            "Guardando..."
-          ) : (
-            <>
-              <FiSave className="h-5 w-5" />
-              Registrar Participante
-            </>
-          )}
-        </button>
+          label={loading ? "Guardando..." : "Registrar Participante"}
+          icon={!loading ? <FiSave size={24} /> : undefined}
+          className="mt-6 w-full"
+          shape="rounded"
+        />
       </form>
     </ShowcaseSection>
   );

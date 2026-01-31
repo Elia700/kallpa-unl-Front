@@ -6,6 +6,7 @@ import { Participant } from "@/types/participant";
 import { participantService } from "@/services/participant.service";
 import { useMemo, useState, useCallback } from "react";
 import { FiChevronDown, FiFilter, FiSearch } from "react-icons/fi";
+import { useRouter } from "next/navigation";
 
 interface ParticipantsTableProps {
   data: Participant[];
@@ -13,6 +14,7 @@ interface ParticipantsTableProps {
 }
 
 export function ParticipantsTable({ data, onStatusChange }: ParticipantsTableProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODOS");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -26,7 +28,17 @@ export function ParticipantsTable({ data, onStatusChange }: ParticipantsTablePro
 
     try {
       setLoadingId(participant.id);
-      await participantService.changeStatus(participant.id, newStatus);
+      const result = await participantService.changeStatus(participant.id, newStatus);
+      
+      // Si result es undefined, fue error de red
+      if (result === undefined) {
+        window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+          detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+        }));
+        setLoadingId(null);
+        return;
+      }
+
       if (onStatusChange) {
         await onStatusChange();
       }
@@ -38,9 +50,15 @@ export function ParticipantsTable({ data, onStatusChange }: ParticipantsTablePro
     }
   }, [onStatusChange]);
 
+  const handleEdit = useCallback((participant: Participant) => {
+    if (participant.id) {
+      router.push(`/pages/participant/edit/${participant.id}`);
+    }
+  }, [router]);
+
   const columns = useMemo(
-    () => getParticipantColumns({ onToggleStatus: handleToggleStatus, loadingId }),
-    [handleToggleStatus, loadingId]
+    () => getParticipantColumns({ onToggleStatus: handleToggleStatus, onEdit: handleEdit, loadingId }),
+    [handleToggleStatus, handleEdit, loadingId]
   );
 
   const filteredData = useMemo(() => {

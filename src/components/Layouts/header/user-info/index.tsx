@@ -41,13 +41,13 @@ export function UserInfo() {
   const lastName = user?.last_name || user?.lastName || "";
   const userName = firstName && lastName ? `${firstName} ${lastName}` : user?.email?.split("@")[0] || "Usuario";
   const userEmail = user?.email || "";
-  
+
   const getInitials = (firstName: string, lastName: string) => {
     const firstInitial = firstName.charAt(0).toUpperCase();
     const lastInitial = lastName.charAt(0).toUpperCase();
     return `${firstInitial}${lastInitial}` || "U";
   };
-  
+
   const userInitials = getInitials(firstName, lastName);
 
   return (
@@ -105,7 +105,7 @@ export function UserInfo() {
             <SettingsIcon />
 
             <span className="mr-auto text-base font-medium">
-              Account Settings
+              Configuración de Cuenta
             </span>
           </Link>
         </div>
@@ -119,7 +119,7 @@ export function UserInfo() {
           >
             <LogOutIcon />
 
-            <span className="text-base font-medium">Log out</span>
+            <span className="text-base font-medium">Cerrar Sesión</span>
           </button>
         </div>
       </DropdownContent>

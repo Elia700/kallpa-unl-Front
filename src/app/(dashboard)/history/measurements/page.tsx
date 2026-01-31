@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { HistoryTable } from "@/components/Tables/history-table";
 import { getParticipants } from "@/hooks/api";
 import Loader from "@/components/Loader/loader";
@@ -19,7 +18,7 @@ export default function HistoryPage() {
         setError(null);
 
         const data = await getParticipants();
-        setParticipants(data);
+        setParticipants(data ?? []);
       } catch (err) {
         setError("Ocurrió un problema con el servidor, espere un momento");
       } finally {
@@ -53,7 +52,6 @@ export default function HistoryPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1080px]">
-      <Breadcrumb pageName="Historial - Participantes" />
       <div className="space-y-10">
         <HistoryTable data={participants} />
       </div>

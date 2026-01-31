@@ -19,6 +19,13 @@ export function OverviewCardsGroup() {
     participantService
       .getActiveParticipantsCounts()
       .then((data) => {
+        // Si data es undefined, fue error de red, disparar evento SERVER_DOWN
+        if (data === undefined) {
+          window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+            detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+          }));
+          return;
+        }
         setAdultCount(data.adult);
         setMinorCount(data.minor);
       })

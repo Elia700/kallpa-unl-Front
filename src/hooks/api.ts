@@ -18,7 +18,7 @@ import {
 // Login - Conecta con tu Proxy / AuthController
 export const login = async (
   credentials: LoginRequest,
-): Promise<LoginResponse> => {
+): Promise<LoginResponse | undefined> => {
   const response = await post<LoginResponse, LoginRequest>(
     "/auth/login",
     credentials,
@@ -28,15 +28,15 @@ export const login = async (
 
 // ==================== PARTICIPANTES ====================
 
-export const getParticipants = async (): Promise<Participant[]> => {
+export const getParticipants = async (): Promise<Participant[] | undefined> => {
   const response = await get<ApiResponse<Participant[]>>("/users");
-  return response.data;
+  return response?.data;
 };
 
 // Crear usuario estándar
 export const createParticipant = async (
   data: Participant,
-): Promise<ApiResponse<Participant>> => {
+): Promise<ApiResponse<Participant> | undefined> => {
   const response = await postWithAuth<ApiResponse<Participant>, Participant>(
     "/users",
     data,
@@ -47,7 +47,7 @@ export const createParticipant = async (
 // Crear Iniciación Deportiva (Niño + Padre - Transacción)
 export const createInitiation = async (
   data: InitiationRequest,
-): Promise<ApiResponse<any>> => {
+): Promise<ApiResponse<any> | undefined> => {
   const response = await postWithAuth<ApiResponse<any>, InitiationRequest>(
     "/users/initiation",
     data,
@@ -58,13 +58,13 @@ export const createInitiation = async (
 // Búsqueda segura por DNI
 export const searchParticipantByDni = async (
   dni: string,
-): Promise<Participant | null> => {
+): Promise<Participant | null | undefined> => {
   try {
     const response = await postWithAuth<
       ApiResponse<Participant>,
       { dni: string }
     >("/users/search", { dni });
-    return response.data;
+    return response?.data;
   } catch (error) {
     return null;
   }
@@ -73,7 +73,7 @@ export const searchParticipantByDni = async (
 // ==================== MEDIDAS ANTROPOMÉTRICAS ====================
 export const saveAssessment = async (
   data: AssessmentData,
-): Promise<ApiResponse<AssessmentResponseData>> => {
+): Promise<ApiResponse<AssessmentResponseData> | undefined> => {
   const response = await post<
     ApiResponse<AssessmentResponseData>,
     AssessmentData
@@ -81,15 +81,18 @@ export const saveAssessment = async (
   return response;
 };
 
-export const getRecords = async (): Promise<AssessmentResponseData[]> => {
+export const getRecords = async (): Promise<AssessmentResponseData[] | undefined> => {
   const response =
     await get<ApiResponse<AssessmentResponseData[]>>("/list-assessment");
-  return response.data;
+  return response?.data;
 };
 
 export const getAssessmentsByParticipant = async (
   participantExternalId: string,
-) => {
+): Promise<{
+  participant: Participant;
+  assessments: AssessmentResponseData[];
+} | undefined> => {
   const response = await get<
     ApiResponse<{
       participant: Participant;
@@ -97,21 +100,13 @@ export const getAssessmentsByParticipant = async (
     }>
   >(`/participants/${participantExternalId}/assessments`);
 
-  return response.data;
-};
-
-export const getBmiDistribution = async (): Promise<BmiDistributionItem[]> => {
-  const response = await get<
-    ApiResponse<BmiDistributionItem[]>
-  >("/bmi-distribution");
-
-  return response.data;
+  return response?.data;
 };
 
 // ==================== TEST FORMULARIOS ====================
-export const getTests = async (): Promise<TestListItem[]> => {
+export const getTests = async (): Promise<TestListItem[] | undefined> => {
   const response = await get<ApiResponse<TestListItem[]>>("/list-test");
-  return response.data.map(test => ({
+  return response?.data.map(test => ({
     ...test,
     already_done: !!test.already_done,
   }));
@@ -119,7 +114,7 @@ export const getTests = async (): Promise<TestListItem[]> => {
 
 export const saveTest = async (
   data: TestData,
-): Promise<ApiResponse<TestResponseData>> => {
+): Promise<ApiResponse<TestResponseData> | undefined> => {
   const response = await post<ApiResponse<TestResponseData>, TestData>(
     "/save-test",
     data,
@@ -130,7 +125,7 @@ export const saveTest = async (
 
 export const registerForm = async (
   data: RegisterTestFormData,
-): Promise<ApiResponse<any>> => {
+): Promise<ApiResponse<any> | undefined> => {
   const response = await post<ApiResponse<any>, RegisterTestFormData>(
     "/apply_test",
     data,
@@ -141,22 +136,22 @@ export const registerForm = async (
 
 export const getTestsForParticipant = async (
   participant_external_id: string,
-): Promise<TestListItemForParticipant[]> => {
+): Promise<TestListItemForParticipant[] | undefined> => {
   const response = await get<ApiResponse<TestListItemForParticipant[]>>(
     `/list-tests-participant?participant_external_id=${participant_external_id}`,
   );
-  return response.data;
+  return response?.data;
 };
 
 export const getParticipantProgress = async (
   participant_external_id: string,
-): Promise<ParticipantProgressResponse> => {
+): Promise<ParticipantProgressResponse | undefined> => {
   const response = await get<ApiResponse<ParticipantProgressResponse>>(
     `/participant-progress?participant_external_id=${participant_external_id}`,
   );
 
-  if (response.code !== 200) {
-    throw new Error(response.msg || "Error al obtener progreso");
+  if (!response || response.code !== 200) {
+    throw new Error(response?.msg || "Error al obtener progreso");
   }
 
   return response.data;
@@ -164,11 +159,11 @@ export const getParticipantProgress = async (
 
 export const getTestById = async (
   external_id: string
-): Promise<any> => {
+): Promise<any | undefined> => {
   const response = await get<ApiResponse<any>>(`/get-test/${external_id}`);
 
-  if (response.status !== "ok") {
-    throw new Error(response.msg || "Error al obtener el detalle del test");
+  if (!response || response.status !== "ok") {
+    throw new Error(response?.msg || "Error al obtener el detalle del test");
   }
 
   return response.data;
@@ -176,7 +171,7 @@ export const getTestById = async (
 
 export const updateTest = async (
   data: TestData & { test_external_id: string }
-): Promise<ApiResponse<TestResponseData>> => {
+): Promise<ApiResponse<TestResponseData> | undefined> => {
   const response = await put<ApiResponse<TestResponseData>, typeof data>(
     "/update-test",
     data
@@ -187,7 +182,7 @@ export const updateTest = async (
 
 export const deleteTest = async (
   external_id: string
-): Promise<ApiResponse<any>> => {
+): Promise<ApiResponse<any> | undefined> => {
   const response = await del<ApiResponse<any>>(
     `/delete-test/${external_id}`
   );

@@ -12,7 +12,7 @@ interface StepperProps {
 
 export const Stepper: React.FC<StepperProps> = ({ currentStep }) => {
     const steps: Step[] = [
-        { id: 1, label: "Seleccionar Test" },
+        { id: 1, label: "Seleccionar Evaluación" },
         { id: 2, label: "Seleccionar Participante" },
         { id: 3, label: "Llenar Formulario" },
     ];

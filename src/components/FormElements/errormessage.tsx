@@ -5,7 +5,7 @@ interface ErrorMessageProps {
 export default function ErrorMessage({ message }: ErrorMessageProps) {
   return (
     <p
-      className={`mt-1 text-sm text-red-500 transition-opacity duration-200 md:text-xs ${
+      className={`mt-[1px] mb-0 text-sm text-red-500 transition-opacity duration-200 md:text-xs ${
         message ? "opacity-100" : "select-none opacity-0"
       }`}
     >

@@ -70,11 +70,21 @@ export const UserForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    // Manual validation
+    const newErrors: Record<string, string> = {};
+    if (!formData.firstName) newErrors.firstName = "El nombre es obligatorio";
+    if (!formData.lastName) newErrors.lastName = "El apellido es obligatorio";
+    if (!formData.dni) newErrors.dni = "La cédula es obligatoria";
+    if (!formData.email) newErrors.email = "El correo electrónico es obligatorio";
+    if (!formData.password) newErrors.password = "La contraseña es obligatoria";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
-      if (!formData.email) {
-        setErrors((prev) => ({ ...prev, email: "El correo electrónico es obligatorio" }));
-        return;
-      }
       const payload: CreateUserRequest = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -100,12 +110,30 @@ export const UserForm = () => {
         password: "",
         role: "",
       });
-    } catch (error: any) {
-      if (error?.data) {
-        setErrors(error.data);
-      } else {
-        showTemporaryAlert("error", "Error", error.msg || "Error al registrar usuario");
+    } catch (err: any) {
+      if (!err.response) {
+        console.error("No response from server", err);
+        return;
       }
+
+      const response = err.response?.data || err;
+
+      if (response && response.status === "error") {
+        const errorSource = response.data?.validation_errors || response.data;
+
+        if (errorSource && typeof errorSource === "object") {
+          const fieldErrors: Record<string, string> = {};
+          Object.entries(errorSource).forEach(([key, value]) => {
+            if (typeof value === "string") {
+              fieldErrors[key] = value;
+            }
+          });
+          setErrors(fieldErrors);
+          return;
+        }
+      }
+
+      showTemporaryAlert("error", "Error", response?.msg || response?.message || "Error al registrar usuario");
     }
   };
 
@@ -177,6 +205,7 @@ export const UserForm = () => {
                 iconPosition="left"
                 icon={<FiPhone className="text-gray-400" size={18} />}
               />
+              <ErrorMessage message={errors.phone} />
             </div>
           </div>
 
@@ -191,6 +220,7 @@ export const UserForm = () => {
               iconPosition="left"
               icon={<FiMapPin className="text-gray-400" size={18} />}
             />
+            <ErrorMessage message={errors.address} />
           </div>
 
           <div className="mb-4.5 grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -259,7 +289,7 @@ export const UserForm = () => {
 
           <Button label="Registrar Cuenta"
             shape="rounded"
-            icon={<FiSave className="h-5 w-5" />}
+            icon={<FiSave size={24} />}
           />
         </div>
 
