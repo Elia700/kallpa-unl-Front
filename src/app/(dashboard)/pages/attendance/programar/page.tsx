@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { attendanceService } from '@/services/attendance.services';
 import type { Schedule, Program } from '@/types/attendance';
 import { Alert } from '@/components/ui-elements/alert';
@@ -32,7 +30,6 @@ function Loading() {
 }
 
 export default function Programar() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);

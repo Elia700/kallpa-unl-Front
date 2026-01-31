@@ -12,8 +12,10 @@ function StatCard({ icon, iconBg, label, value }: { icon: string; iconBg: string
   return (
     <div className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
       <div className="flex items-center gap-3">
-        <div className={`${iconBg} p-2 rounded-lg`}>
-          <span className="material-symbols-outlined">{icon}</span>
+        <div className={`${iconBg} w-12 h-12 rounded-xl flex items-center justify-center shrink-0`}>
+          <span className="material-symbols-outlined !text-2xl !leading-none flex items-center justify-center">
+            event
+          </span>
         </div>
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">{label}</p>
@@ -335,8 +337,8 @@ export default function Historial() {
       {/* Stats Cards */}
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <StatCard icon="event" iconBg="bg-blue-100 text-blue-800" label="Total Sesiones" value={totalSessions} />
-        <StatCard icon="percent" iconBg="bg-purple-100 text-purple-600" label="Asistencia Promedio" value={`${avgAttendance}%`} />
+        <StatCard icon="event" iconBg="bg-blue-500/10 text-blue-500" label="Total Sesiones" value={totalSessions} />
+        <StatCard icon="percent" iconBg="bg-emerald-500/10 text-emerald-500" label="Asistencia Promedio" value={`${avgAttendance}%`} />
       </div>
 
       {/* Filters */}

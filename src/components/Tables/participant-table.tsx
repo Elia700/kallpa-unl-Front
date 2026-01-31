@@ -28,7 +28,17 @@ export function ParticipantsTable({ data, onStatusChange }: ParticipantsTablePro
 
     try {
       setLoadingId(participant.id);
-      await participantService.changeStatus(participant.id, newStatus);
+      const result = await participantService.changeStatus(participant.id, newStatus);
+      
+      // Si result es undefined, fue error de red
+      if (result === undefined) {
+        window.dispatchEvent(new CustomEvent('SERVER_DOWN', { 
+          detail: { message: "No se puede conectar con el servidor. Por favor intenta nuevamente más tarde." }
+        }));
+        setLoadingId(null);
+        return;
+      }
+
       if (onStatusChange) {
         await onStatusChange();
       }

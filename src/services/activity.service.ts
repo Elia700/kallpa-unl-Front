@@ -10,17 +10,24 @@ export const RecentActivities = {
   },
 
   async getRecent() {
-    const response = await fetch(`${API_URL}/activities/recent`, {
-      method: "GET",
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_URL}/activities/recent`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      throw new Error("Error al obtener actividades");
+      if (!response.ok) {
+        throw new Error("Error al obtener actividades");
+      }
+
+      const data = await response.json();
+      console.log("----", data);
+      return data.data;
+    } catch (error: any) {
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        return undefined;
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    console.log("----",data);
-    return data.data; // <-- aquí tienes la lista de actividades
   },
 };

@@ -111,10 +111,15 @@ export const UserForm = () => {
         role: "",
       });
     } catch (err: any) {
+      if (!err.response) {
+        console.error("No response from server", err);
+        return;
+      }
+
       const response = err.response?.data || err;
 
       if (response && response.status === "error") {
-        const errorSource = response.data?.validation_errors || response.data; // Handles both 
+        const errorSource = response.data?.validation_errors || response.data;
 
         if (errorSource && typeof errorSource === "object") {
           const fieldErrors: Record<string, string> = {};
@@ -284,7 +289,7 @@ export const UserForm = () => {
 
           <Button label="Registrar Cuenta"
             shape="rounded"
-            icon={<FiSave className="h-5 w-5" />}
+            icon={<FiSave size={24} />}
           />
         </div>
 
