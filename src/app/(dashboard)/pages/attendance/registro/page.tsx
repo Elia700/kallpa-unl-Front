@@ -14,6 +14,7 @@ import { attendanceService } from '@/services/attendance.services';
 import type { Schedule, Participant, Program } from '@/types/attendance';
 import { Alert } from '@/components/ui-elements/alert';
 import { Button } from '@/components/ui-elements/button';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 /**
  * Componente de carga con spinner animado.
@@ -277,7 +278,7 @@ export default function Registro() {
       setParticipants(normalizedParticipants);
       setAttendance(newAttendance);
     } catch (error) {
-      // Error silencioso
+      triggerAlert('error', 'Error al actualizar participantes', extractErrorMessage(error));
     } finally {
       setRefreshing(false);
     }
@@ -349,7 +350,7 @@ export default function Registro() {
       triggerAlert(
         'error',
         'Error al guardar',
-        error?.response?.data?.message || error?.message || 'No se pudo guardar la asistencia. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     } finally {
       setSaving(false);

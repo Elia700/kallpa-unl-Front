@@ -19,6 +19,7 @@ import { Button } from '@/components/ui-elements/button';
 import { Select } from '@/components/FormElements/select';
 import InputGroup from '@/components/FormElements/InputGroup';
 import { parseDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 // Días de la semana disponibles para programación
 const DAYS_OF_WEEK = [
@@ -152,7 +153,7 @@ export default function Programar() {
 
       setSchedules(normalizedSchedules);
     } catch (error) {
-      // Error silencioso
+      triggerAlert('error', 'Error al cargar horarios', extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -327,41 +328,23 @@ export default function Programar() {
       setErrors({});
       loadData();
     } catch (error: any) {
-      // Manejo de errores del backend
-      if (error?.response?.data && typeof error.response.data === 'object') {
-        const errorData = error.response.data;
-
-        if (errorData.data && typeof errorData.data === 'object') {
-          const translatedErrors: Record<string, string> = {};
-
-          Object.keys(errorData.data).forEach(key => {
-            let message = errorData.data[key];
-
-            // Traducir mensaje de conflicto de horarios
-            if (key === 'schedule' && message.includes('se solapa')) {
-              const match = message.match(/: (.+?)$/);
-              const programName = match ? match[1].trim() : '';
-              message = `Ya existe una sesión del programa "${programName}" en este horario. Por favor elige otro día u hora.`;
-            }
-
-            translatedErrors[key] = message;
-          });
-
-          setErrors(translatedErrors);
-        } else {
-          triggerAlert(
-            'error',
-            'Error al crear sesión',
-            errorData.message || errorData.msg || 'No se pudo crear la sesión.'
-          );
-        }
-      } else {
-        triggerAlert(
-          'error',
-          'Error al crear sesión',
-          'No se pudo crear la sesión. Intenta nuevamente.'
-        );
+      // Extraer y mostrar errores del backend
+      const errorMessage = extractErrorMessage(error);
+      
+      // Si hay errores de validación específicos por campo
+      if (error?.response?.data?.data && typeof error.response.data.data === 'object') {
+        const fieldErrors: Record<string, string> = {};
+        Object.entries(error.response.data.data).forEach(([key, value]) => {
+          fieldErrors[key] = String(value);
+        });
+        setErrors(fieldErrors);
       }
+      
+      triggerAlert(
+        'error',
+        'Error al crear sesión',
+        errorMessage
+      );
     } finally {
       setSaving(false);
     }

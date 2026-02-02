@@ -20,6 +20,7 @@ import { Select } from '@/components/FormElements/select';
 import InputGroup from '@/components/FormElements/InputGroup';
 import { parseDate } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 /**
  * Componente de tarjeta de estadísticas
@@ -160,7 +161,7 @@ export default function DashboardAsistencia() {
         const historyRes = await attendanceService.getHistory(todayStr, todayStr);
         historyData = historyRes.data.data || [];
       } catch (error) {
-        // Error silencioso - historial puede estar vacío
+        // Error manejado silenciosamente - historial puede estar vacío
       }
 
       const [participantsRes, schedulesRes] = await Promise.all([
@@ -181,7 +182,7 @@ export default function DashboardAsistencia() {
       setUpcomingSessions(upcoming);
 
     } catch (error) {
-      // Error silencioso - se maneja en la UI
+      // Error manejado silenciosamente
     } finally {
       setLoading(false);
     }
@@ -401,7 +402,7 @@ export default function DashboardAsistencia() {
       triggerAlert(
         'error',
         'Error al eliminar',
-        'No se pudo eliminar la sesión. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     } finally {
       setDeleting(null);
@@ -482,7 +483,7 @@ export default function DashboardAsistencia() {
       triggerAlert(
         'error',
         'Error al actualizar',
-        'No se pudieron guardar los cambios. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     }
   };

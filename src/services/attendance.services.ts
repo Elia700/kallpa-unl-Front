@@ -24,9 +24,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
  */
 const getHeaders = () => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  // Si el token no incluye "Bearer", agregarlo
+  const authHeader = token && !token.startsWith('Bearer ') ? `Bearer ${token}` : token;
   return {
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
+    'Authorization': authHeader || '',
   };
 };
 

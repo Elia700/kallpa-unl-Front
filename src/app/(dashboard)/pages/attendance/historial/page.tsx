@@ -15,6 +15,7 @@ import { Alert } from '@/components/ui-elements/alert';
 import { Button } from '@/components/ui-elements/button';
 import { Select } from '@/components/FormElements/select';
 import DatePickerTwo from '@/components/FormElements/DatePicker/DatePickerTwo';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 /**
  * Componente de tarjeta estadística para mostrar métricas resumidas.
@@ -141,7 +142,7 @@ export default function Historial() {
       const normalizedHistory = normalizeHistoryData(rawHistory);
       setHistory(normalizedHistory);
     } catch (error) {
-      // Error silencioso
+      triggerAlert('error', 'Error al cargar datos', extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -198,7 +199,7 @@ export default function Historial() {
       const normalizedHistory = normalizeHistoryData(rawHistory);
       setHistory(normalizedHistory);
     } catch (error) {
-      // Error silencioso
+      triggerAlert('error', 'Error al cargar historial', extractErrorMessage(error));
     }
   };
 
@@ -317,7 +318,7 @@ export default function Historial() {
       triggerAlert(
         'error',
         'Error al eliminar',
-        'No se pudo eliminar el registro. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     } finally {
       setAttendanceToDelete(null);

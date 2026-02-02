@@ -13,6 +13,7 @@ import type { Schedule } from '@/types/attendance';
 import { Alert } from '@/components/ui-elements/alert';
 import { Button } from '@/components/ui-elements/button';
 import InputGroup from '@/components/FormElements/InputGroup';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 /**
  * Componente de carga con spinner animado.
@@ -110,7 +111,7 @@ export default function Sesiones() {
       });
       setSchedules(normalized);
     } catch (error) {
-      // Error silencioso
+      triggerAlert('error', 'Error al cargar sesiones', extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -163,7 +164,7 @@ export default function Sesiones() {
       triggerAlert(
         'error',
         'Error al eliminar',
-        'No se pudo eliminar la sesión. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     } finally {
       setDeleting(null);
@@ -212,7 +213,7 @@ export default function Sesiones() {
       triggerAlert(
         'error',
         'Error al actualizar',
-        'No se pudieron guardar los cambios. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     }
   };

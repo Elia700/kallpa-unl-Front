@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { attendanceService } from '@/services/attendance.services';
 import type { Program, Participant } from '@/types/attendance';
 import { Alert } from '@/components/ui-elements/alert';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 const COLORS = [
   { value: '#3B82F6' },
@@ -74,6 +75,7 @@ export default function ProgramasPage() {
       const res = await attendanceService.getPrograms();
       setPrograms(res.data.data || []);
     } catch (error) {
+      // Error manejado silenciosamente
     } finally {
       setLoading(false);
     }
@@ -123,20 +125,11 @@ export default function ProgramasPage() {
       handleCloseModal();
       loadPrograms();
     } catch (error: any) {
-      if (error?.response?.data && typeof error.response.data === 'object') {
-        const errorData = error.response.data;
-        triggerAlert(
-          'error',
-          'Error al guardar',
-          errorData.message || errorData.msg || 'No se pudo guardar el programa. Intenta nuevamente.'
-        );
-      } else {
-        triggerAlert(
-          'error',
-          'Error al guardar',
-          'No se pudo guardar el programa. Intenta nuevamente.'
-        );
-      }
+      triggerAlert(
+        'error',
+        'Error al guardar',
+        extractErrorMessage(error)
+      );
     } finally {
       setSaving(false);
     }
@@ -164,7 +157,7 @@ export default function ProgramasPage() {
       triggerAlert(
         'error',
         'Error al eliminar',
-        'No se pudo eliminar el programa. Intenta nuevamente.'
+        extractErrorMessage(error)
       );
     } finally {
       setDeleting(null);
@@ -186,6 +179,7 @@ export default function ProgramasPage() {
       }));
       setProgramParticipants(normalized);
     } catch (error) {
+      triggerAlert('error', 'Error al cargar participantes', extractErrorMessage(error));
       setProgramParticipants([]);
     } finally {
       setLoadingParticipants(false);

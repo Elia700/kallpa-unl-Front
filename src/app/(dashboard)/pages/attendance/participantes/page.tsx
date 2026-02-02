@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { attendanceService } from '@/services/attendance.services';
 import { participantService } from '@/services/participant.service';
 import type { Participant } from '@/types/attendance';
+import { extractErrorMessage } from '@/utils/error-handler';
 
 /**
  * Componente de tarjeta estadística para mostrar métricas resumidas.
@@ -92,7 +93,7 @@ export default function Participantes() {
       })) as Participant[];
       setParticipants(normalized);
     } catch (error) {
-      // Error silencioso
+      // Error manejado silenciosamente
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,7 @@ export default function Participantes() {
       })) as Participant[];
       setPasantesData(normalized);
     } catch (error) {
-      // Error silencioso
+      // Error manejado silenciosamente
     }
   };
 
@@ -141,7 +142,7 @@ export default function Participantes() {
       setAttendanceStats(newStats);
 
     } catch (error) {
-      // Error silencioso
+      // Error manejado silenciosamente
     } finally {
       setLoading(false);
     }
