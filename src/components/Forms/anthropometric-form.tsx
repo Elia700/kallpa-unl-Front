@@ -104,9 +104,9 @@ export function AnthropometricForm() {
         setBmi(response.data.bmi);
         setStatus(response.data.status);
         setAlertType("success");
-        setAlertTitle("Medidas guardadas");
+        setAlertTitle("Medida antropométrica registrada exitosamente");
         setAlertDescription(
-          "Las medidas antropométricas se guardaron correctamente.",
+          "La medida antropométrica se guardo con éxito..",
         );
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 3000);
@@ -131,7 +131,7 @@ export function AnthropometricForm() {
       // Otros errores respondidos por el servidor
       setAlertType("error");
       setAlertTitle("Error");
-      setAlertDescription(data?.msg || "No se pudo guardar la evaluación.");
+      setAlertDescription(data?.msg || "No se pudo guardar la medida antropométrica.");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
     } finally {

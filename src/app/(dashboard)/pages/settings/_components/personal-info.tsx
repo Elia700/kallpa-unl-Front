@@ -4,7 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import { userService, UserProfileData } from "@/services/user.services";
 import { ShowcaseSection } from "@/components/Layouts/showcase-section";
 import InputGroup from "@/components/FormElements/InputGroup";
-import { FiEdit, FiAlertTriangle, FiUser, FiPhone, FiMapPin, FiLock } from "react-icons/fi";
+import { Alert } from "@/components/ui-elements/alert";
+import { FiEdit, FiAlertTriangle, FiUser, FiPhone, FiMapPin, FiLock, FiSave } from "react-icons/fi";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui-elements/button";
 
 const HARDCODED_ACCOUNTS = ["dev@kallpa.com", "admin@kallpa.com"];
 
@@ -19,48 +22,80 @@ export function PersonalInfoForm() {
     password: "",
   });
 
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertVariant, setAlertVariant] = useState<"success" | "error" | "warning">("success");
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertDescription, setAlertDescription] = useState("");
+
   const isHardcodedAccount = useMemo(() => {
     return HARDCODED_ACCOUNTS.includes(userEmail.toLowerCase());
   }, [userEmail]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const fetchUserData = async () => {
+      setLoading(true);
       try {
-        const parsedUser = JSON.parse(storedUser);
-        const firstName = parsedUser.first_name || parsedUser.firstName || "";
-        const lastName = parsedUser.last_name || parsedUser.lastName || "";
-        const phone = parsedUser.phone || "";
-        const address = parsedUser.address || "";
-        const email = parsedUser.email || "";
+        const result = await userService.getProfile();
+        const profile = result.data;
 
-        setUserEmail(email);
-        setFormData({
-          firstName,
-          lastName,
-          phone,
-          address,
-          password: "",
-        });
+        if (profile) {
+          setFormData({
+            firstName: profile.firstName || "",
+            lastName: profile.lastName || "",
+            phone: profile.phone || "",
+            address: profile.address || "",
+            password: "",
+          });
+          setUserEmail(profile.email || "");
+        }
       } catch (error) {
-        console.error("Error parsing user data:", error);
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setFormData({
+            firstName: parsedUser.firstName || "",
+            lastName: parsedUser.lastName || "",
+            phone: parsedUser.phone || "",
+            address: parsedUser.address || "",
+            password: "",
+          });
+        }
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchUserData();
   }, []);
+
+  const triggerAlert = (
+    variant: "success" | "error" | "warning",
+    title: string,
+    description: string,
+  ) => {
+    setAlertVariant(variant);
+    setAlertTitle(title);
+    setAlertDescription(description);
+    setShowAlert(true);
+
+    setTimeout(() => {
+      setShowAlert(false);
+    }, 4000);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.password) {
-      alert("Debes ingresar tu contraseña para guardar los cambios");
+    if (name === "phone") {
+      const onlyNums = value.replace(/[^0-9]/g, "");
+      if (onlyNums.length <= 10) {
+        setFormData((prev) => ({ ...prev, [name]: onlyNums }));
+      }
       return;
     }
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
 
     try {
@@ -81,41 +116,29 @@ export function PersonalInfoForm() {
 
         localStorage.setItem("user", JSON.stringify(updatedUser));
 
-        alert("Perfil actualizado correctamente");
+        triggerAlert(
+          "success",
+          "Tu perfil se ha actualizado correctamente.",
+          "Perfil actualizado",
+        );
 
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
       } else {
-        alert(response.msg || "Error al actualizar perfil");
+        triggerAlert(
+          "error",
+          "Error al actualizar perfil",
+          response.msg || "Ocurrió un error al actualizar tu perfil.",
+        );
       }
     } catch (error: any) {
       console.error("Error completo:", error);
-      alert(
-        "Error: " +
-        (error.response?.data?.msg || error.message || "Error al actualizar"),
-      );
+      const message =
+        error.response?.data?.msg || error.message || "Error al actualizar el perfil.";
+      triggerAlert("error", "Error al actualizar perfil", message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        const firstName = parsedUser.first_name || parsedUser.firstName || "";
-        const lastName = parsedUser.last_name || parsedUser.lastName || "";
-
-        setFormData({
-          firstName,
-          lastName,
-          phone: parsedUser.phone || "",
-          address: parsedUser.address || "",
-          password: "",
-        });
-      } catch (error) {
-        console.error("Error:", error);
-      }
     }
   };
 
@@ -125,6 +148,15 @@ export function PersonalInfoForm() {
       title="Información Personal"
       description="Actualiza tus datos personales"
     >
+      {showAlert && (
+        <div className="mb-5">
+          <Alert
+            variant={alertVariant}
+            title={alertTitle}
+            description={alertDescription}
+          />
+        </div>
+      )}
       {isHardcodedAccount && (
         <div className="mb-5 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
           <FiAlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
@@ -198,32 +230,21 @@ export function PersonalInfoForm() {
           />
         </div>
 
-        <div className="mb-5.5">
-          <InputGroup
-            label="Contraseña *"
-            name="password"
-            type="password"
-            placeholder="Ingresa tu contraseña para guardar"
-            value={formData.password}
-            handleChange={handleChange}
-            disabled={isHardcodedAccount}
-            required={!isHardcodedAccount}
-            iconPosition="left"
-            icon={<FiLock className="text-gray-400" size={18} />}
-          />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Requerida para sincronizar con el sistema
-          </p>
-        </div>
-
         <div className="flex justify-end gap-3">
-          <button
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary p-[13px] font-bold text-white hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          <Button
             type="submit"
+            label={loading ? "Guardando..." : "Guardar Cambios"}
+            shape="rounded"
+            icon={
+              loading ? (
+                <RefreshCw className="animate-spin" size={20} />
+              ) : (
+                <FiSave size={24} />
+              )
+            }
             disabled={loading || isHardcodedAccount}
-          >
-            {loading ? "Guardando..." : "Guardar"}
-          </button>
+            className="mt-2 w-full"
+          />
         </div>
       </form>
     </ShowcaseSection>

@@ -42,7 +42,7 @@ export function EvolutionTestForm({
     };
   }, [activeExercise]);
 
-  if (!test) return <p className="text-center py-10 text-slate-500">No hay test seleccionado</p>;
+  if (!test) return <p className="text-center py-10 text-slate-500">No hay evaluación seleccionado</p>;
 
   const secondsToTime = (total: number) => ({
     minutes: Math.floor(total / 60),

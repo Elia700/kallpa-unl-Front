@@ -83,8 +83,8 @@ export function AssessmentForm({ initialData }: { initialData?: AssessmentInitia
       if (res && res.status === "ok") {
         setAlertVariant("success");
         setAlertMessage({
-          title: isEditing ? "Evaluación actualizada" : "Evaluación creado",
-          description: "Los cambios se guardaron correctamente",
+          title: isEditing ? "Evaluación actualizada correctamente" : "Evaluación creado correctamente",
+          description: "Los cambios se guardaron con exitó",
         });
         setShowAlert(true);
         setTimeout(() => router.push("/evolution/list-test"), 1500);

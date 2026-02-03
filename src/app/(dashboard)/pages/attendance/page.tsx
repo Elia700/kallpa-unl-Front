@@ -24,6 +24,7 @@ import { useSession } from '@/context/SessionContext';
 import { parseDate } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Plus, Check, MapPin, Clock, CalendarDays, Edit3, Trash2, Timer } from 'lucide-react';
+import { EmptyState } from '../../ui-elements/empty-state';
 
 /**
  * Componente de tarjeta de estadísticas
@@ -604,35 +605,40 @@ export default function DashboardAsistencia() {
             </span>
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {todaySchedules.map((schedule) => {
-            const scheduleId = schedule.external_id || schedule.id; //
-            const isCompleted = todayHistory.some(h => (h.schedule?.external_id || h.schedule?.id) === scheduleId);
-            return (
-              <div key={scheduleId} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
 
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{schedule.name}</h3>
-                    <span className="text-[10px] font-bold text-blue-500 uppercase">INICIACIÓN</span>
+        {todaySchedules.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {todaySchedules.map((schedule) => {
+              const scheduleId = schedule.external_id || schedule.id;
+              const isCompleted = todayHistory.some(h => (h.schedule?.external_id || h.schedule?.id) === scheduleId);
+              return (
+                <div key={scheduleId} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{schedule.name}</h3>
+                      <span className="text-[10px] font-bold text-blue-500 uppercase">INICIACIÓN</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-orange-50 text-orange-500 dark:bg-orange-500/10'}`}>
+                      {isCompleted ? <Check size={10} /> : <Timer size={10} />}
+                      {isCompleted ? 'Completada' : 'Pendiente'}
+                    </span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-orange-50 text-orange-500 dark:bg-orange-500/10'
-                    }`}>
-                    {isCompleted ? <Check size={10} /> : <Timer size={10} />}
-                    {isCompleted ? 'Completada' : 'Pendiente'}
-                  </span>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <Clock size={14} className="text-red-400" />
-                    <span className="text-xs font-medium">{schedule.start_time} - {schedule.end_time}</span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <Clock size={14} className="text-red-400" />
+                      <span className="text-xs font-medium">{schedule.start_time} - {schedule.end_time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <MapPin size={14} className="text-emerald-400" />
+                      <span className="text-xs font-medium truncate">{schedule.location || 'Coliseo'}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <MapPin size={14} className="text-emerald-400" />
-                    <span className="text-xs font-medium truncate">{schedule.location || 'Coliseo'}</span>
-                  </div>
+                  <Link href={`/pages/attendance/registro?session=${scheduleId}&date=${currentDate.toISOString().split('T')[0]}`}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Check size={14} /> Registrar Asistencia
+                  </Link>
                 </div>
 
                 <div className="flex gap-2">
@@ -663,18 +669,34 @@ export default function DashboardAsistencia() {
           <h2 className="text-lg font-bold text-gray-800 dark:text-white">Próximas Sesiones</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {upcomingSessions.map((session, index) => {
-            const sessionId = session.external_id || session.id;
-            const sessionDate = (session as any).nextDate;
-            return (
-              <div key={`upcoming-${sessionId}-${index}`} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-lime-500" />
-
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{session.name}</h3>
-                    <span className="text-[10px] font-bold text-lime-600 dark:text-lime-400 uppercase">INICIACIÓN</span>
+        {upcomingSessions.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingSessions.map((session, index) => {
+              const sessionId = session.external_id || session.id;
+              const sessionDate = (session as any).nextDate;
+              return (
+                <div key={`upcoming-${sessionId}-${index}`} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-lime-500" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{session.name}</h3>
+                      <span className="text-[10px] font-bold text-lime-600 dark:text-lime-400 uppercase">INICIACIÓN</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-lime-50 dark:bg-lime-500/10 text-lime-600 dark:text-lime-400 flex items-center gap-1">
+                      <Calendar size={10} /> Próxima
+                    </span>
+                  </div>
+                  <div className="space-y-2 mb-4 text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs"><Clock size={14} className="text-red-400" /> {session.start_time} - {session.end_time}</div>
+                    <div className="flex items-center gap-2 text-xs"><Calendar size={14} className="text-blue-400" /> {formatShortDate(sessionDate)}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(session)} className="flex-[4] py-2 bg-lime-500 hover:bg-lime-600 text-lime-950 dark:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                      <Edit3 size={14} /> Editar
+                    </button>
+                    <button onClick={() => handleDelete(session.id, session.name)} className="flex-1 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-500 rounded-xl flex items-center justify-center transition-all border border-gray-100 dark:border-gray-700">
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-lime-50 dark:bg-lime-500/10 text-lime-600 dark:text-lime-400 flex items-center gap-1">
                     <Calendar size={10} /> Próxima
@@ -694,10 +716,18 @@ export default function DashboardAsistencia() {
                     <Trash2 size={16} />
                   </button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No hay sesiones futuras en tu agenda"
+            description="Cuando programes nuevas sesiones para los próximos días, aparecerán en este lugar."
+            icon={CalendarDays}
+            historyLabel="Ver historial de sesiones"
+            onHistory={() => router.push("/pages/attendance/historial")}
+          />
+        )}
       </section>
 
       {/* Modal de Edición */}

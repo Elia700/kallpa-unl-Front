@@ -8,7 +8,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import DatePickerTwo from '@/components/FormElements/DatePicker/DatePickerTwo';
 import { attendanceService } from '@/services/attendance.services';
 import type { Schedule } from '@/types/attendance';
@@ -51,8 +50,6 @@ function Loading() {
  * Permite crear nuevas sesiones y visualizar el horario semanal.
  */
 export default function Programar() {
-  const router = useRouter();
-
   // Estado de carga y guardado
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -425,7 +422,7 @@ export default function Programar() {
 
             {/* Tipo de sesión */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de sesión *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de sesión</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input

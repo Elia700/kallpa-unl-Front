@@ -224,7 +224,7 @@ export function AssignTest() {
 
                     setAlert({
                       type: "success",
-                      message: "El test se guardó correctamente.",
+                      message: "Evaluación aplicada correctamente",
                     });
                     setCurrentStep(1);
                     setSelectedTestId(null);

@@ -88,7 +88,7 @@ export const UserForm = () => {
 
       await userService.createUser(payload);
 
-      showTemporaryAlert("success", "Éxito", "Usuario registrado correctamente");
+      showTemporaryAlert("success", "Usuario registrado correctamente","Éxito");
 
       setFormData({
         firstName: "",

@@ -183,8 +183,8 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
         if (response.status === "success" || response.code === 200) {
           triggerAlert(
             "success",
+            "Participante actualizado correctamente",
             "Participante actualizado",
-            "El participante se actualizó correctamente.",
           );
           setTimeout(() => {
             router.push("/pages/participant");
@@ -200,8 +200,8 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
         });
         triggerAlert(
           "success",
+          "Participante registrado correctamente",
           "Participante registrado",
-          "El participante se registró correctamente.",
         );
 
         setFormData({
