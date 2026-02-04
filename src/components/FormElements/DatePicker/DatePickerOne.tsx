@@ -2,6 +2,7 @@
 
 import { Calendar } from "@/components/Layouts/sidebar/icons";
 import flatpickr from "flatpickr";
+import { Spanish } from "flatpickr/dist/l10n/es.js";
 import { useEffect } from "react";
 
 const DatePickerOne = () => {
@@ -12,6 +13,7 @@ const DatePickerOne = () => {
       static: true,
       monthSelectorType: "static",
       dateFormat: "M j, Y",
+      locale: Spanish, // Configurar idioma español
     });
   }, []);
 

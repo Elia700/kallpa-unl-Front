@@ -163,13 +163,38 @@ export const attendanceService = {
    * @param endDate - Fecha de fin (YYYY-MM-DD)
    * @param scheduleId - ID del horario (opcional)
    * @param day - Día de la semana para filtrar (opcional)
+   * @param searchText - Texto de búsqueda (DNI o nombre)
    */
-  async getHistory(startDate?: string, endDate?: string, scheduleId?: string, day?: string) {
+  async getHistory(startDate?: string, endDate?: string, scheduleId?: string, day?: string, searchText?: string) {
+    // Mapeo de días español a español en mayúsculas (formato que espera el backend)
+    const spanishUppercaseDay: Record<string, string> = {
+      'Lunes': 'LUNES',
+      'Martes': 'MARTES', 
+      'Miércoles': 'MIERCOLES',
+      'Jueves': 'JUEVES',
+      'Viernes': 'VIERNES',
+      'Sábado': 'SABADO',
+      'Domingo': 'DOMINGO'
+    };
+
     const params = new URLSearchParams();
     if (startDate) params.append('date_from', startDate);
     if (endDate) params.append('date_to', endDate);
     if (scheduleId) params.append('schedule_id', scheduleId);
-    if (day && day !== 'Todos los días') params.append('day', day);
+    if (day && day !== 'Todos los días') {
+      const upperSpanishDay = spanishUppercaseDay[day] || day.toUpperCase();
+      params.append('day_of_week', upperSpanishDay);
+    }
+    // Parámetros de búsqueda por participante
+    if (searchText && searchText.trim()) {
+      const trimmed = searchText.trim();
+      // Si es numérico, buscar por DNI; si no, buscar por nombre
+      if (/^\d+$/.test(trimmed)) {
+        params.append('dni', trimmed);
+      } else {
+        params.append('name', trimmed);
+      }
+    }
 
     const res = await fetchWithSession(
       `${API_URL}/attendance/v2/public/history?${params.toString()}`,
@@ -180,7 +205,6 @@ export const attendanceService = {
     );
 
     const result = await res.json();
-
     if (!res.ok) {
       throw result;
     }

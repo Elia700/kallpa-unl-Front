@@ -1,7 +1,6 @@
 "use client";
-import { FiCalendar, FiMessageSquare, FiMinus, FiPause, FiPlay, FiPlus, FiRotateCcw } from "react-icons/fi";
+import { FiMessageSquare, FiMinus, FiPause, FiPlay, FiPlus, FiRotateCcw } from "react-icons/fi";
 import { TestData } from "@/types/test";
-import DatePickerTwo from "@/components/FormElements/DatePicker/DatePickerTwo";
 import { TextAreaGroup } from "@/components/FormElements/InputGroup/text-area";
 import { useEffect, useState } from "react";
 
@@ -43,7 +42,7 @@ export function EvolutionTestForm({
     };
   }, [activeExercise]);
 
-  if (!test) return <p className="text-center py-10 text-slate-500">No hay test seleccionado</p>;
+  if (!test) return <p className="text-center py-10 text-slate-500">No hay evaluación seleccionado</p>;
 
   const secondsToTime = (total: number) => ({
     minutes: Math.floor(total / 60),
@@ -70,15 +69,15 @@ export function EvolutionTestForm({
             <div
               key={idx}
               className={`flex flex-row items-center justify-between gap-2 p-2 md:p-3 rounded-xl border transition-all duration-300 ${isActive
-                  ? 'bg-blue-50 border-blue-500 shadow-md dark:bg-blue-500/10 dark:border-blue-400'
-                  : 'bg-white border-slate-200 shadow-sm dark:bg-slate-800/40 dark:border-slate-700/50'
+                ? 'bg-blue-50 border-blue-500 shadow-md dark:bg-blue-500/10 dark:border-blue-400'
+                : 'bg-white border-slate-200 shadow-sm dark:bg-slate-800/40 dark:border-slate-700/50'
                 }`}
             >
               {/* Contenedor Izquierdo: Número y Nombre */}
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded font-bold text-[10px] ${isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
                   }`}>
                   {idx + 1}
                 </span>
@@ -99,8 +98,8 @@ export function EvolutionTestForm({
                       <button
                         onClick={() => ex.external_id && setActiveExercise(isActive ? null : ex.external_id)}
                         className={`flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-lg transition-all active:scale-95 ${isActive
-                            ? 'bg-red-500 text-white animate-pulse'
-                            : 'bg-blue-600 text-white'
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-blue-600 text-white'
                           }`}
                       >
                         {isActive ? <FiPause size={14} /> : <FiPlay size={14} className="ml-0.5" />}
@@ -128,10 +127,22 @@ export function EvolutionTestForm({
                       <FiMinus size={14} />
                     </button>
 
-                    <div className="min-w-[30px] text-center">
-                      <span className="text-lg md:text-xl font-black text-slate-800 dark:text-white tabular-nums">
-                        {currentValue}
-                      </span>
+                    <div className="w-12 md:w-16">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={currentValue}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, "");
+                          const numVal = val === "" ? 0 : parseInt(val, 10);
+
+                          setValues((prev) => ({
+                            ...prev,
+                            [ex.external_id!]: numVal,
+                          }));
+                        }}
+                        className="w-full bg-transparent text-center text-lg md:text-xl font-black text-slate-800 dark:text-white tabular-nums border-none focus:ring-0 focus:outline-none p-0"
+                      />
                     </div>
 
                     <button
@@ -148,13 +159,6 @@ export function EvolutionTestForm({
         })}
       </div>
       <div className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <FiCalendar className="text-blue-500" /> Fecha de Registro
-          </label>
-          <DatePickerTwo value={date} onChange={(newDate: string) => setDate(newDate)} />
-        </div>
-
         <div className="space-y-2">
           <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <FiMessageSquare className="text-blue-500" /> Notas de Rendimiento

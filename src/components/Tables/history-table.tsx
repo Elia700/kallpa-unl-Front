@@ -40,6 +40,10 @@ export function HistoryTable({ data }: { data: Participant[] }) {
     setLoadingMeasurements(true);
     try {
       const res = await getAssessmentsByParticipant(participant.external_id ?? participant.id);
+      if (!res) {
+        setMeasurements([]);
+        return;
+      }
       setMeasurements(res.assessments);
     } catch (err) {
       console.error("Error al cargar mediciones", err);
@@ -57,14 +61,14 @@ export function HistoryTable({ data }: { data: Participant[] }) {
     <div className="flex flex-col gap-3">
       {selectedParticipant && (
         <Button
-        label="Volver a buscar"
-        icon={<span>←</span>}
-        variant="outlineDark"
-        size="small"
-        shape="rounded"
-        onClick={handleResetSearch}
-        className="w-fit" 
-      />
+          label="Volver a buscar"
+          icon={<span>←</span>}
+          variant="outlineDark"
+          size="small"
+          shape="rounded"
+          onClick={handleResetSearch}
+          className="w-fit"
+        />
       )}
       {!selectedParticipant && (
         <>

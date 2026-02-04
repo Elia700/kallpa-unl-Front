@@ -2,7 +2,7 @@
 
 import { ChevronUpIcon } from "@/assets/icons";
 import { cn } from "@/lib/utils";
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 
 type PropsType = {
   label: string;
@@ -33,7 +33,11 @@ export function Select({
 }: PropsType) {
   const id = useId();
 
-  const [isOptionSelected, setIsOptionSelected] = useState(false);
+  const [isOptionSelected, setIsOptionSelected] = useState(!!defaultValue || !!value);
+
+  useEffect(() => {
+    setIsOptionSelected(!!defaultValue || !!value);
+  }, [defaultValue, value]);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -53,7 +57,7 @@ export function Select({
 
         <select
           id={id}
-          value={value || ""}
+          {...(value !== undefined ? { value } : { defaultValue })}
           name={name}
           disabled={disabled}
           onChange={(e) => {

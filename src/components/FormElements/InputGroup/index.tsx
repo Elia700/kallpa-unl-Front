@@ -17,6 +17,7 @@ type InputGroupProps = {
   iconPosition?: "left" | "right";
   height?: "sm" | "default";
   defaultValue?: string;
+  allowOnlyAlphanumeric?: boolean;
 };
 
 const InputGroup: React.FC<InputGroupProps> = ({
@@ -29,9 +30,26 @@ const InputGroup: React.FC<InputGroupProps> = ({
   active,
   handleChange,
   icon,
+  allowOnlyAlphanumeric = false,
   ...props
 }) => {
   const id = useId();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (allowOnlyAlphanumeric) {
+      // Solo permite letras, números, espacios y algunos caracteres básicos
+      const alphanumericRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]*$/;
+      
+      if (!alphanumericRegex.test(e.target.value)) {
+        // Filtrar caracteres no válidos
+        e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]/g, '');
+      }
+    }
+    
+    if (handleChange) {
+      handleChange(e);
+    }
+  };
 
   return (
     <div className={className}>
@@ -56,7 +74,7 @@ const InputGroup: React.FC<InputGroupProps> = ({
           type={type}
           name={props.name}
           placeholder={placeholder}
-          onChange={handleChange}
+          onChange={handleInputChange}
           value={props.value}
           defaultValue={props.defaultValue}
           className={cn(

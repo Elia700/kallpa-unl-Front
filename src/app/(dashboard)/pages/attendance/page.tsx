@@ -18,11 +18,13 @@ import ErrorMessage from '@/components/FormElements/errormessage';
 import { Button } from '@/components/ui-elements/button';
 import { Select } from '@/components/FormElements/select';
 import InputGroup from '@/components/FormElements/InputGroup';
+import DatePickerTwo from '@/components/FormElements/DatePicker/DatePickerTwo';
 import { extractErrorMessage, isServerDownError } from '@/utils/error-handler';
 import { useSession } from '@/context/SessionContext';
 import { parseDate } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Calendar, Users, Activity, Plus, Check, MapPin, Clock, CalendarDays, Edit3, Trash2, Timer } from 'lucide-react';
+import { EmptyState } from '../../ui-elements/empty-state';
 
 /**
  * Componente de tarjeta de estadísticas
@@ -371,23 +373,37 @@ export default function DashboardAsistencia() {
 
     setDeleting(sessionToDelete.id);
     setShowConfirmDelete(false);
+
     try {
       await attendanceService.deleteSchedule(String(sessionToDelete.id));
+
+      // Actualizar estado local inmediatamente
       setUpcomingSessions(prev => prev.filter(s => (s.external_id || s.id) !== sessionToDelete.id));
       setTodaySchedules(prev => prev.filter(s => ((s as any).external_id || s.id) !== sessionToDelete.id));
+
+      // Mostrar mensaje de éxito
       triggerAlert(
         'success',
-        'Sesión eliminada',
+        'Sesión eliminada exitosamente',
         `La sesión "${sessionToDelete.name}" se ha eliminado correctamente.`
       );
-      loadData();
+
+      // Recargar datos (si falla, no afecta el mensaje de éxito)
+      try {
+        await loadData();
+      } catch (reloadError) {
+        console.warn('Error al recargar datos después de eliminación:', reloadError);
+      }
+
     } catch (error) {
+      console.error('Error al eliminar sesión:', error);
+
       if (isServerDownError(error)) {
         showServerDown(extractErrorMessage(error));
       } else {
         triggerAlert(
           'error',
-          'Error al eliminar',
+          'Error al eliminar sesión',
           extractErrorMessage(error)
         );
       }
@@ -446,21 +462,41 @@ export default function DashboardAsistencia() {
 
     setEditEndDateError('');
 
+    // Calcular dayOfWeek correcto
+    const specificDate = formData.get('specific_date') as string;
+    let calculatedDayOfWeek = '';
+
+    if (specificDate) {
+      // Para sesiones con fecha específica, calcular el día de la semana automáticamente
+      const dateObj = new Date(specificDate + 'T12:00:00');
+      const dayIndex = dateObj.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+      const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      calculatedDayOfWeek = dayNames[dayIndex];
+    } else {
+      // Para sesiones recurrentes, usar el día seleccionado
+      calculatedDayOfWeek = dayMap[dayValue] || dayValue?.toUpperCase() || '';
+    }
+
     const data = {
       name: formData.get('name') as string,
       program: formData.get('program') as string,
-      dayOfWeek: dayMap[dayValue] || dayValue?.toUpperCase(),
+      dayOfWeek: calculatedDayOfWeek,
       startTime: formData.get('start_time') as string,
       endTime: formData.get('end_time') as string,
       location: formData.get('location') as string,
-      specificDate: formData.get('specific_date') as string || undefined,
+      specificDate: specificDate || undefined,
       endDate: endDate || undefined,
     };
 
     try {
       await attendanceService.updateSchedule(String(sessionId), data);
       setEditingSession(null);
-      loadData(); // Recargar datos
+      await loadData(); // Recargar datos
+      triggerAlert(
+        'success',
+        'Sesión actualizada',
+        'Los cambios se han guardado correctamente.'
+      );
       triggerAlert(
         'success',
         'Sesión actualizada',
@@ -494,6 +530,33 @@ export default function DashboardAsistencia() {
       day: 'numeric',
       month: 'short'
     });
+  };
+
+  // Función para obtener el programa formateado
+  const getFormattedProgram = (program: string) => {
+    if (!program) return 'SIN PROGRAMA';
+    switch (program.toUpperCase()) {
+      case 'INICIACION':
+      case 'INICIACIÓN':
+        return 'INICIACIÓN';
+      case 'FUNCIONAL':
+        return 'FUNCIONAL';
+      default:
+        return program.toUpperCase();
+    }
+  };
+
+  // Función para obtener el color del programa
+  const getProgramColor = (program: string) => {
+    const formattedProgram = getFormattedProgram(program);
+    switch (formattedProgram) {
+      case 'INICIACIÓN':
+        return 'text-blue-500';
+      case 'FUNCIONAL':
+        return 'text-emerald-600';
+      default:
+        return 'text-gray-500';
+    }
   };
 
   const activeParticipants = participants.filter(p => p.status === 'active' || p.status === 'ACTIVO').length;
@@ -569,46 +632,62 @@ export default function DashboardAsistencia() {
             </span>
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {todaySchedules.map((schedule) => {
-            const scheduleId = schedule.external_id || schedule.id; //
-            const isCompleted = todayHistory.some(h => (h.schedule?.external_id || h.schedule?.id) === scheduleId);
-            return (
-              <div key={scheduleId} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
 
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{schedule.name}</h3>
-                    <span className="text-[10px] font-bold text-blue-500 uppercase">INICIACIÓN</span>
+        {todaySchedules.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {todaySchedules.map((schedule) => {
+              const scheduleId = schedule.external_id || schedule.id;
+              const isCompleted = todayHistory.some(h => (h.schedule?.external_id || h.schedule?.id) === scheduleId);
+              return (
+                <div key={scheduleId} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${isCompleted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{schedule.name}</h3>
+                      <span className={`text-[10px] font-bold uppercase ${getProgramColor(schedule.program || '')}`}>
+                        {getFormattedProgram(schedule.program || '')}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-orange-50 text-orange-500 dark:bg-orange-500/10'}`}>
+                      {isCompleted ? <Check size={10} /> : <Timer size={10} />}
+                      {isCompleted ? 'Completada' : 'Pendiente'}
+                    </span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${isCompleted ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10' : 'bg-orange-50 text-orange-500 dark:bg-orange-500/10'
-                    }`}>
-                    {isCompleted ? <Check size={10} /> : <Timer size={10} />}
-                    {isCompleted ? 'Completada' : 'Pendiente'}
-                  </span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <Clock size={14} className="text-red-400" />
+                      <span className="text-xs font-medium">{schedule.start_time} - {schedule.end_time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                      <MapPin size={14} className="text-emerald-400" />
+                      <span className="text-xs font-medium truncate">{schedule.location || 'Coliseo'}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href={`/pages/attendance/registro?session=${scheduleId}&date=${currentDate.toISOString().split('T')[0]}`}
+                      className="flex-[3] py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 hover:border-indigo-200 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 dark:border-indigo-500/20 dark:hover:border-indigo-500/30"
+                    >
+                      <Check size={14} /> {isCompleted ? 'Editar Asistencia' : 'Registrar Asistencia'}
+                    </Link>
+                    <button onClick={() => handleEdit(schedule)} className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 hover:border-emerald-200 rounded-xl flex items-center justify-center transition-all dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/20 dark:hover:border-emerald-500/30">
+                      <Edit3 size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(scheduleId, schedule.name)} className="flex-1 py-2 bg-gray-50 dark:bg-gray-800/50 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl flex items-center justify-center transition-all border border-gray-200 hover:border-red-200 dark:border-gray-700 dark:hover:bg-red-500/10 dark:hover:border-red-500/30 dark:text-gray-400 dark:hover:text-red-400">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <Clock size={14} className="text-red-400" />
-                    <span className="text-xs font-medium">{schedule.start_time} - {schedule.end_time}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <MapPin size={14} className="text-emerald-400" />
-                    <span className="text-xs font-medium truncate">{schedule.location || 'Coliseo'}</span>
-                  </div>
-                </div>
-
-                <Link href={`/pages/attendance/registro?session=${scheduleId}&date=${currentDate.toISOString().split('T')[0]}`}
-                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
-                >
-                  <Check size={14} /> Registrar Asistencia
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No hay sesiones programadas para hoy"
+            description="Cuando programes sesiones para hoy, aparecerán en este lugar."
+            icon={Calendar}
+            onAction={() => router.push("/pages/attendance/programar")}
+          />
+        )}
       </section>
 
       {/* --- PRÓXIMAS SESIONES --- */}
@@ -620,41 +699,50 @@ export default function DashboardAsistencia() {
           <h2 className="text-lg font-bold text-gray-800 dark:text-white">Próximas Sesiones</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {upcomingSessions.map((session, index) => {
-            const sessionId = session.external_id || session.id;
-            const sessionDate = (session as any).nextDate;
-            return (
-              <div key={`upcoming-${sessionId}-${index}`} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-lime-500" />
-
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{session.name}</h3>
-                    <span className="text-[10px] font-bold text-lime-600 dark:text-lime-400 uppercase">INICIACIÓN</span>
+        {upcomingSessions.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {upcomingSessions.map((session, index) => {
+              const sessionId = session.external_id || session.id;
+              const sessionDate = (session as any).nextDate;
+              return (
+                <div key={`upcoming-${sessionId}-${index}`} className="bg-white dark:bg-[#111827] rounded-[20px] p-4 border border-gray-100 dark:border-gray-800 shadow-sm relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-lime-500" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">{session.name}</h3>
+                      <span className={`text-[10px] font-bold uppercase ${getProgramColor(session.program || '')}`}>
+                        {getFormattedProgram(session.program || '')}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-lime-50 dark:bg-lime-500/10 text-lime-600 dark:text-lime-400 flex items-center gap-1">
+                      <Calendar size={10} /> Próxima
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-lime-50 dark:bg-lime-500/10 text-lime-600 dark:text-lime-400 flex items-center gap-1">
-                    <Calendar size={10} /> Próxima
-                  </span>
+                  <div className="space-y-2 mb-4 text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs"><Clock size={14} className="text-red-400" /> {session.start_time} - {session.end_time}</div>
+                    <div className="flex items-center gap-2 text-xs"><Calendar size={14} className="text-blue-400" /> {formatShortDate(sessionDate)}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(session)} className="flex-[4] py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 hover:border-emerald-200 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/20 dark:hover:border-emerald-500/30">
+                      <Edit3 size={14} /> Editar
+                    </button>
+                    <button onClick={() => handleDelete(sessionId, session.name)} className="flex-1 py-2 bg-gray-50 dark:bg-gray-800/50 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-xl flex items-center justify-center transition-all border border-gray-200 hover:border-red-200 dark:border-gray-700 dark:hover:bg-red-500/10 dark:hover:border-red-500/30 dark:text-gray-400 dark:hover:text-red-400">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-
-                <div className="space-y-2 mb-4 text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center gap-2 text-xs"><Clock size={14} className="text-red-400" /> {session.start_time} - {session.end_time}</div>
-                  <div className="flex items-center gap-2 text-xs"><Calendar size={14} className="text-blue-400" /> {formatShortDate(sessionDate)}</div>
-                </div>
-
-                <div className="flex gap-2">
-                  <button onClick={() => handleEdit(session)} className="flex-[4] py-2 bg-lime-500 hover:bg-lime-600 text-lime-950 dark:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                    <Edit3 size={14} /> Editar
-                  </button>
-                  <button onClick={() => handleDelete(session.id, session.name)} className="flex-1 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-red-500 rounded-xl flex items-center justify-center transition-all border border-gray-100 dark:border-gray-700">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No hay sesiones futuras en tu agenda"
+            description="Cuando programes nuevas sesiones para los próximos días, aparecerán en este lugar."
+            icon={CalendarDays}
+            historyLabel="Ver historial de sesiones"
+            onHistory={() => router.push("/pages/attendance/historial")}
+          />
+        )}
       </section>
 
       {/* Modal de Edición */}
@@ -688,6 +776,7 @@ export default function DashboardAsistencia() {
                 name="name"
                 defaultValue={editingSession.name || ''}
                 placeholder="Nombre de la sesión"
+                allowOnlyAlphanumeric={true}
                 required
               />
 
@@ -704,15 +793,17 @@ export default function DashboardAsistencia() {
               {editingSession.is_recurring === false || editingSession.specific_date ? (
                 // Sesión con fecha específica
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha específica</label>
-                  <input
-                    type="date"
-                    name="specific_date"
-                    defaultValue={editingSession.specific_date || ''}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  <DatePickerTwo
+                    label="Fecha específica"
+                    value={editingSession.specific_date || ''}
+                    onChange={(newDate) => {
+                      // Actualizar el estado local para manejar cambios
+                      setEditingSession(prev => prev ? { ...prev, specific_date: newDate } : null);
+                    }}
+                    minDate="today"
                   />
                   {/* Campo oculto para mantener compatibilidad */}
+                  <input type="hidden" name="specific_date" value={editingSession.specific_date || ''} />
                   <input type="hidden" name="day_of_week" value={editingSession.day_of_week || ''} />
                 </div>
               ) : (
@@ -733,15 +824,16 @@ export default function DashboardAsistencia() {
                     ]}
                   />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha fin (opcional)</label>
-                    <input
-                      type="date"
-                      name="end_date"
-                      defaultValue={editingSession.end_date || ''}
-                      onChange={() => setEditEndDateError('')}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                    <DatePickerTwo
+                      label="Fecha fin (opcional)"
+                      value={editingSession.end_date || ''}
+                      onChange={(newDate) => {
+                        setEditingSession(prev => prev ? { ...prev, end_date: newDate } : null);
+                        setEditEndDateError(''); // Limpiar error al cambiar
+                      }}
+                      minDate={new Date().toISOString().split('T')[0]}
                     />
+                    <input type="hidden" name="end_date" value={editingSession.end_date || ''} />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">La fecha debe coincidir con el día de la semana seleccionado</p>
                     <ErrorMessage message={editEndDateError} />
                   </div>
@@ -771,7 +863,7 @@ export default function DashboardAsistencia() {
                 />
               </div>
               <InputGroup
-                label="Ubicación"
+                label="Ubicación (opcional)"
                 type="text"
                 name="location"
                 defaultValue={editingSession.location || ''}

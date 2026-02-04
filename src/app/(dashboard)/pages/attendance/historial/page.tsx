@@ -17,7 +17,7 @@ import { Select } from '@/components/FormElements/select';
 import DatePickerTwo from '@/components/FormElements/DatePicker/DatePickerTwo';
 import { extractErrorMessage, isServerDownError } from '@/utils/error-handler';
 import { useSession } from '@/context/SessionContext';
-import { CalendarDays, LucideIcon, Percent, Search } from 'lucide-react';
+import { CalendarDays, LucideIcon, Percent, Search, User, CheckCircle, XCircle } from 'lucide-react';
 
 /**
  * Componente de tarjeta estadística para mostrar métricas resumidas.
@@ -88,6 +88,17 @@ export default function Historial() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
   const [filterDay, setFilterDay] = useState('Todos los días');
+  const [searchText, setSearchText] = useState('');
+  
+  // Estado para estadísticas del participante buscado
+  const [participantStats, setParticipantStats] = useState<{
+    name: string;
+    dni?: string;
+    presentes: number;
+    ausentes: number;
+    total: number;
+    porcentaje: number;
+  } | null>(null);
 
   // Hook de sesión para manejo de errores globales
   const { showServerDown } = useSession();
@@ -121,7 +132,7 @@ export default function Historial() {
     if (dateFrom && dateTo) {
       loadHistory();
     }
-  }, [dateFrom, dateTo, filterDay]);
+  }, [dateFrom, dateTo, filterDay, searchText]);
 
   /**
    * Carga inicial de datos: historial y horarios disponibles.
@@ -209,13 +220,60 @@ export default function Historial() {
    */
   const loadHistory = async () => {
     try {
-      const res = await attendanceService.getHistory(dateFrom, dateTo, undefined, filterDay);
+      const res = await attendanceService.getHistory(dateFrom, dateTo, undefined, filterDay, searchText);
       const rawHistory = res.data || [];
-      const normalizedHistory = normalizeHistoryData(rawHistory);
-      setHistory(normalizedHistory);
+      
+      // Si hay texto de búsqueda, calcular estadísticas del participante
+      if (searchText && searchText.trim() && rawHistory.length > 0) {
+        const firstRecord = rawHistory[0];
+        const participantName = firstRecord.participant?.first_name 
+          ? `${firstRecord.participant.first_name} ${firstRecord.participant.last_name || ''}`.trim()
+          : firstRecord.participant_name || 'Participante';
+        const participantDni = firstRecord.participant?.dni || firstRecord.dni;
+        
+        let presentes = 0;
+        let ausentes = 0;
+        rawHistory.forEach((r: any) => {
+          const status = r.status?.toUpperCase();
+          if (status === 'PRESENT') presentes++;
+          else if (status === 'ABSENT') ausentes++;
+        });
+        const total = rawHistory.length;
+        const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
+        
+        setParticipantStats({
+          name: participantName,
+          dni: participantDni,
+          presentes,
+          ausentes,
+          total,
+          porcentaje
+        });
+        
+        // Para el participante, mostrar registros individuales en lugar de agrupar
+        const individualRecords: HistoryRecord[] = rawHistory.map((r: any) => ({
+          date: r.date,
+          schedule_id: r.schedule?.external_id || r.schedule_id || '',
+          schedule_name: r.schedule?.name || 'Sesión',
+          day_of_week: r.schedule?.day_of_week || '',
+          start_time: r.schedule?.start_time || '',
+          end_time: r.schedule?.end_time || '',
+          presentes: r.status?.toUpperCase() === 'PRESENT' ? 1 : 0,
+          ausentes: r.status?.toUpperCase() === 'ABSENT' ? 1 : 0,
+          total: 1,
+          // Campo adicional para mostrar estado individual
+          status: r.status?.toUpperCase()
+        })).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        setHistory(individualRecords);
+      } else {
+        // Sin búsqueda, limpiar stats y mostrar historial agrupado normal
+        setParticipantStats(null);
+        const normalizedHistory = normalizeHistoryData(rawHistory);
+        setHistory(normalizedHistory);
+      }
     } catch (err: any) {
       if (err?.message === "SERVER_DOWN" || err?.message === "SESSION_EXPIRED") return;
-      // triggerAlert('error', 'Error al cargar historial', extractErrorMessage(err));
     }
   };
 
@@ -409,7 +467,22 @@ export default function Historial() {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div className="min-w-0 xl:col-span-2">
+            <label className="mb-2.5 block text-sm font-medium text-dark dark:text-white">
+              Buscar participante
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar por nombre o DNI..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-transparent py-2.5 pl-4 pr-10 text-dark dark:text-white placeholder:text-gray-400 focus:border-primary focus:outline-none dark:bg-gray-800"
+              />
+              <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
           <div className="min-w-0">
             <DatePickerTwo
               label="Desde"
@@ -424,7 +497,7 @@ export default function Historial() {
               onChange={(newDate) => setDateTo(newDate)}
             />
           </div>
-          <div className="min-w-0 md:col-span-2 xl:col-span-1">
+          <div className="min-w-0">
             <Select
               label="Día"
               value={filterDay}
@@ -442,43 +515,89 @@ export default function Historial() {
               ]}
             />
           </div>
-          <div className="min-w-0 flex items-end">
-            <Button
-              label="Buscar"
-              shape="rounded"
-              className="w-full"
-              icon={<Search size={24} />}
-              onClick={loadHistory}
-            />
-          </div>
         </div>
       </div>
+
+      {/* Estadísticas del participante buscado */}
+      {participantStats && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-sm border border-blue-100 dark:border-gray-600 p-5 mb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-blue-500/20 p-2.5 rounded-full">
+              <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{participantStats.name}</h3>
+              {participantStats.dni && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">DNI: {participantStats.dni}</p>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-gray-dark rounded-lg p-3 border border-gray-100 dark:border-gray-600">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Presentes</span>
+              </div>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{participantStats.presentes}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-dark rounded-lg p-3 border border-gray-100 dark:border-gray-600">
+              <div className="flex items-center gap-2 mb-1">
+                <XCircle className="w-4 h-4 text-red-500" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ausentes</span>
+              </div>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{participantStats.ausentes}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-dark rounded-lg p-3 border border-gray-100 dark:border-gray-600">
+              <div className="flex items-center gap-2 mb-1">
+                <CalendarDays className="w-4 h-4 text-blue-500" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Sesiones</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{participantStats.total}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-dark rounded-lg p-3 border border-gray-100 dark:border-gray-600">
+              <div className="flex items-center gap-2 mb-1">
+                <Percent className="w-4 h-4 text-indigo-500" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Asistencia</span>
+              </div>
+              <p className={`text-2xl font-bold ${participantStats.porcentaje >= 80 ? 'text-green-600 dark:text-green-400' : participantStats.porcentaje >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                {participantStats.porcentaje}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* History Table */}
       <div className="bg-white dark:bg-gray-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full" style={{ minWidth: '900px' }}>
+          <table className="w-full" style={{ minWidth: participantStats ? '700px' : '900px' }}>
             <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Sesión</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Horario</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Presentes</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Ausentes</th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                {participantStats ? (
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                ) : (
+                  <>
+                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Presentes</th>
+                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Ausentes</th>
+                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                  </>
+                )}
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {filteredHistory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={participantStats ? 5 : 7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     <span className="material-symbols-outlined text-4xl mb-2 block" translate="no">history</span>
                     <p>No hay registros en este período</p>
                   </td>
                 </tr>
               ) : (
-                filteredHistory.map((h, idx) => (
+                filteredHistory.map((h: any, idx) => (
                   <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium text-gray-900 dark:text-white">
@@ -495,19 +614,37 @@ export default function Historial() {
                         {h.start_time} - {h.end_time}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        {h.presentes || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        {h.ausentes || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center font-semibold text-gray-900 dark:text-white">
-                      {h.total || 0}
-                    </td>
+                    {participantStats ? (
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+                          h.status === 'PRESENT' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {h.status === 'PRESENT' ? (
+                            <><CheckCircle className="w-3.5 h-3.5" /> Presente</>
+                          ) : (
+                            <><XCircle className="w-3.5 h-3.5" /> Ausente</>
+                          )}
+                        </span>
+                      </td>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                            {h.presentes || 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                            {h.ausentes || 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center font-semibold text-gray-900 dark:text-white">
+                          {h.total || 0}
+                        </td>
+                      </>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button

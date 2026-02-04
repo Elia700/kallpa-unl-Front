@@ -35,13 +35,18 @@ export const userService = {
     return result;
   },
 
-  async getProfile() {
-    const response = await get("/users/profile");
-    return response;
-  },
-
   async updateProfile(data: UserProfileData) {
     const response = await put("/users/profile", data);
     return response;
+  },
+  async getProfile() {
+    const response = await fetchWithSession(`${API_URL}/users/profile`, {
+      method: "GET",
+      headers: this.getHeaders(),
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw result;
+    return result;
   },
 };
