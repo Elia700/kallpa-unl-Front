@@ -373,14 +373,14 @@ export default function DashboardAsistencia() {
 
     setDeleting(sessionToDelete.id);
     setShowConfirmDelete(false);
-    
+
     try {
       await attendanceService.deleteSchedule(String(sessionToDelete.id));
-      
+
       // Actualizar estado local inmediatamente
       setUpcomingSessions(prev => prev.filter(s => (s.external_id || s.id) !== sessionToDelete.id));
       setTodaySchedules(prev => prev.filter(s => ((s as any).external_id || s.id) !== sessionToDelete.id));
-      
+
       // Mostrar mensaje de éxito
       triggerAlert(
         'success',
@@ -397,7 +397,7 @@ export default function DashboardAsistencia() {
 
     } catch (error) {
       console.error('Error al eliminar sesión:', error);
-      
+
       if (isServerDownError(error)) {
         showServerDown(extractErrorMessage(error));
       } else {
@@ -465,7 +465,7 @@ export default function DashboardAsistencia() {
     // Calcular dayOfWeek correcto
     const specificDate = formData.get('specific_date') as string;
     let calculatedDayOfWeek = '';
-    
+
     if (specificDate) {
       // Para sesiones con fecha específica, calcular el día de la semana automáticamente
       const dateObj = new Date(specificDate + 'T12:00:00');
@@ -648,15 +648,14 @@ export default function DashboardAsistencia() {
                     </button>
                   </div>
                 </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
         ) : (
           <EmptyState
             title="No hay sesiones programadas para hoy"
             description="Cuando programes sesiones para hoy, aparecerán en este lugar."
             icon={Calendar}
-            actionLabel="Programar sesión"
             onAction={() => router.push("/pages/attendance/programar")}
           />
         )}

@@ -1,4 +1,5 @@
 import Signin from "@/components/Auth/Signin";
+import RedirectIfAuthenticated from "@/components/Auth/RedirectIfAuthenticated";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
+    <RedirectIfAuthenticated>
+      <div className="flex min-h-screen items-center justify-center bg-[#0f172a] p-4">
       <div className="w-full max-w-[420px] rounded-2xl border border-slate-700/50 bg-[#1e293b] px-10 py-10 shadow-2xl">
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">
@@ -47,5 +49,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </RedirectIfAuthenticated>
   );
 }

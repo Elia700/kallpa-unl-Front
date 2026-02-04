@@ -128,7 +128,24 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const numericFields = ["dni", "age", "phone", "responsibleDni", "responsiblePhone"];
+
+    if (numericFields.includes(name)) {
+      const onlyNumbers = value.replace(/[^0-9]/g, "");
+      const fieldsWithTenDigits = ["dni", "phone", "responsibleDni", "responsiblePhone"];
+
+      if (fieldsWithTenDigits.includes(name) && onlyNumbers.length > 10) {
+        return;
+      }
+      if (name === "age" && onlyNumbers.length > 3) {
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, [name]: onlyNumbers }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
     clearFieldError(name);
   };
 
@@ -159,7 +176,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
         const updateData: any = {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          age: formData.age ? parseInt(formData.age) : undefined,
+          age: formData.age.trim() !== "" ? parseInt(formData.age) : undefined,
           dni: formData.dni,
           phone: formData.phone || undefined,
           email: formData.email || undefined,
@@ -196,7 +213,8 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
         // Modo registro: crear participante
         const response = await participantService.createParticipant({
           ...formData,
-          age: formData.age ? parseInt(formData.age) : 0,
+          email: formData.email.trim() === "" ? "" : formData.email.trim(),
+          age: formData.age.trim() !== "" ? parseInt(formData.age) : undefined,
         });
         triggerAlert(
           "success",
@@ -223,6 +241,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
       if (err?.message === "SERVER_DOWN" || err?.message === "SESSION_EXPIRED") return;
 
       if (err?.code === 400 && err?.data) {
+        console.log("Errores recibidos del servidor:", err.data);
         setErrors(err.data);
         return;
       }
@@ -305,7 +324,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
             <InputGroup
               label="Cédula"
               name="dni"
-              type="number"
+              type="text"
               placeholder="110XXXXXXX"
               value={formData.dni}
               handleChange={handleChange}
@@ -319,7 +338,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
             <InputGroup
               label="Edad"
               name="age"
-              type="number"
+              type="text"
               placeholder="25"
               value={formData.age}
               handleChange={handleChange}
@@ -362,7 +381,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
             <InputGroup
               label="Teléfono"
               name="phone"
-              type="number"
+              type="text"
               placeholder="099XXXXXXX"
               value={formData.phone}
               handleChange={handleChange}
@@ -436,7 +455,7 @@ export const RegisterParticipantForm = ({ participantId }: RegisterParticipantFo
               <InputGroup
                 label="Cédula del Responsable"
                 name="responsibleDni"
-                type="number"
+                type="text"
                 placeholder="110XXXXXXX"
                 value={formData.responsibleDni}
                 handleChange={handleChange}
