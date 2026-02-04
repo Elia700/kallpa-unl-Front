@@ -197,8 +197,11 @@ export default function Registro() {
         };
       }) as Participant[];
 
+      // Filtrar solo participantes activos para el registro de asistencia
+      const activeParticipants = normalizedParticipants.filter(p => p.status === 'ACTIVO');
+
       setAllParticipants(normalizedParticipants);
-      setParticipants(normalizedParticipants);
+      setParticipants(activeParticipants); // Solo participantes activos
 
       if (program) {
         setCurrentProgram(program);
@@ -224,15 +227,18 @@ export default function Registro() {
         };
       }) as Participant[];
 
+      // Filtrar solo participantes activos para el registro de asistencia
+      const activeParticipants = normalizedParticipants.filter(p => p.status === 'ACTIVO');
+
       const newAttendance = { ...attendance };
-      normalizedParticipants.forEach(p => {
+      activeParticipants.forEach(p => {
         if (!(p.id in newAttendance)) {
           newAttendance[p.id] = 'PRESENT';
         }
       });
 
       setAllParticipants(normalizedParticipants);
-      setParticipants(normalizedParticipants);
+      setParticipants(activeParticipants); // Solo participantes activos
       setAttendance(newAttendance);
     } catch (error) {
     } finally {
@@ -387,7 +393,7 @@ export default function Registro() {
                 Lista de Participantes ({participants.length})
               </h2>
               <p className="text-xs text-gray-500 mt-1">
-                Mostrando participantes del programa: <span className="text-blue-400 font-bold">INICIACION</span>
+                Mostrando participantes del programa: <span className="text-blue-400 font-bold">{selectedScheduleData?.program || currentProgram || 'TODOS'}</span>
               </p>
             </div>
 
