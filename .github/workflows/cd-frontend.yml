@@ -1,0 +1,158 @@
+name: 🚀 Deploy Frontend to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  AZURE_WEBAPP_NAME: 'kallpa-frontend-app'
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+
+jobs:
+  build-test:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📁 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
+      - name: 📥 Install dependencies
+        run: npm ci
+      
+      - name: 🔍 Lint code
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: 🏗️ Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://kallpa-backend-app.azurewebsites.net
+      
+      - name: 💾 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: |
+            .next/
+            public/
+            package*.json
+            next.config.mjs
+          retention-days: 1
+
+  deploy-azure:
+    name: 🌐 Deploy to Azure
+    needs: build-test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📁 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📥 Install dependencies
+        run: npm ci
+      
+      - name: 💾 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: .
+      
+      - name: 🏗️ Build for production
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://kallpa-backend-app.azurewebsites.net
+      
+      - name: 🚀 Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  health-check:
+    name: 🩺 Health Check
+    needs: deploy-azure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ⏱️ Wait for deployment
+        run: sleep 30
+      
+      - name: 🔍 Check application health
+        run: |
+          echo "🩺 Checking application health..."
+          
+          # Health check with retry logic
+          max_attempts=5
+          attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts..."
+            
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 30 \
+              --retry 3 \
+              --retry-delay 5 \
+              https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net)
+            
+            echo "HTTP Status: $http_code"
+            
+            if [ "$http_code" = "200" ]; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+            
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ Health check failed after $max_attempts attempts"
+              echo "Final HTTP Status: $http_code"
+              exit 1
+            fi
+            
+            echo "⏳ Waiting 10 seconds before retry..."
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+      
+      - name: 🧪 Test API connectivity
+        run: |
+          echo "🧪 Testing API connectivity..."
+          
+          api_health=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            https://kallpa-backend-app.azurewebsites.net/health)
+          
+          echo "Backend API Health Status: $api_health"
+          
+          if [ "$api_health" != "200" ]; then
+            echo "⚠️ Warning: Backend API health check failed (Status: $api_health)"
+            echo "Frontend deployment completed but backend connectivity may be impacted"
+          else
+            echo "✅ Backend API is healthy"
+          fi

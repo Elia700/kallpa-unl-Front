@@ -1,13 +1,22 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  // 1. Ignorar errores de ESLint durante el build (Solución para las comillas y hooks)
+  // 🏗️ Build Configuration
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // 2. Ignorar errores de Typescript (Opcional, pero recomendado para evitar fallos por tipos)
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // ⚡ Production Optimizations
+  poweredByHeader: false,
+  generateEtags: false,
+  compress: true,
+
+  // 🌐 Azure App Service Support
+  output: process.env.NEXT_OUTPUT_STANDALONE === 'true' ? 'standalone' : undefined,
+
+  // 🖼️ Image Optimization
   images: {
     remotePatterns: [
       {
@@ -29,9 +38,63 @@ const nextConfig = {
         protocol: "https",
         hostname: "pub-b7fd9c30cdbf439183b75041f5f71b92.r2.dev",
         port: ""
+      },
+      {
+        protocol: "https",
+        hostname: "kallpa-backend-app.azurewebsites.net",
+        port: ""
       }
-    ]
-  }
+    ],
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 86400, // 24 hours
+  },
+
+  // 🛡️ Security Headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ];
+  },
+
+  // 📡 API Routes
+  async rewrites() {
+    return [
+      {
+        source: '/health',
+        destination: '/api/health',
+      },
+    ];
+  },
+
+  // 🗜️ Compression is now built-in for Next.js 15+
+  
+  // 📦 Bundle Analysis (uncomment for debugging)
+  // bundlePagesRouterDependencies: true,
+  
+  // 🔧 Experimental Features - minimal config for stability
+  experimental: {
+    // Only use features that are stable in Next.js 15
+  },
 };
 
 export default nextConfig;
