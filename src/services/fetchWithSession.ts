@@ -12,8 +12,14 @@ export async function fetchWithSession(
 ) {
   let response: Response;
 
+  // Agregar credentials para CORS
+  const fetchInit: RequestInit = {
+    ...init,
+    credentials: "include",
+  };
+
   try {
-    response = await fetch(input, init);
+    response = await fetch(input, fetchInit);
   } catch {
     dispatchEvent(
       "SERVER_DOWN",

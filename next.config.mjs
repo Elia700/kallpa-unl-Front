@@ -49,7 +49,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "kallpa-backend-app.azurewebsites.net",
+        hostname: "kallpa-backend-app-h7dad0fnghd9bjhs.westus3-01.azurewebsites.net",
         port: ""
       }
     ],
