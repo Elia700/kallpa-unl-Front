@@ -11,6 +11,7 @@ env:
   NODE_VERSION: '20.x'
   AZURE_WEBAPP_NAME: 'kallpa-frontend-app'
   AZURE_WEBAPP_PACKAGE_PATH: '.'
+  BACKEND_API_URL: 'https://kallpa-backend-app-h7dad0fnghd9bjhs.westus3-01.azurewebsites.net'
 
 jobs:
   build-test:
@@ -47,7 +48,7 @@ jobs:
       - name: 🏗️ Build application
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://kallpa-backend-app.azurewebsites.net
+          NEXT_PUBLIC_API_URL: ${{ env.BACKEND_API_URL }}
       
       - name: 💾 Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -87,7 +88,7 @@ jobs:
       - name: 🏗️ Build for production
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://kallpa-backend-app.azurewebsites.net
+          NEXT_PUBLIC_API_URL: ${{ env.BACKEND_API_URL }}
       
       - name: 🚀 Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
@@ -146,9 +147,9 @@ jobs:
           
           api_health=$(curl -s -o /dev/null -w "%{http_code}" \
             --max-time 30 \
-            https://kallpa-backend-app.azurewebsites.net/health)
+            ${{ env.BACKEND_API_URL }}/api/health || echo "000")
           
-          echo "Backend API Health Status: $api_health"
+          echo "Backend API Status: $api_health"
           
           if [ "$api_health" != "200" ]; then
             echo "⚠️ Warning: Backend API health check failed (Status: $api_health)"
