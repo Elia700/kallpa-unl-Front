@@ -1,3 +1,5 @@
+import path from "path";
+
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   // 🏗️ Build Configuration
@@ -15,6 +17,12 @@ const nextConfig = {
 
   // 🌐 Azure App Service Support
   output: process.env.NEXT_OUTPUT_STANDALONE === 'true' ? 'standalone' : undefined,
+
+  // 🔧 Webpack Configuration for Alias Support
+  webpack: (config) => {
+    config.resolve.alias["@"] = path.resolve(process.cwd(), "src");
+    return config;
+  },
 
   // 🖼️ Image Optimization
   images: {
