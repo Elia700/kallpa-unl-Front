@@ -84,16 +84,6 @@ const nextConfig = {
     ];
   },
 
-  // 📡 API Routes
-  async rewrites() {
-    return [
-      {
-        source: '/health',
-        destination: '/api/health',
-      },
-    ];
-  },
-
   // 🗜️ Compression is now built-in for Next.js 15+
   
   // 📦 Bundle Analysis (uncomment for debugging)

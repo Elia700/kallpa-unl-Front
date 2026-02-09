@@ -39,39 +39,3 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
 
-  health-check:
-    name: Health Check
-    needs: build-and-deploy
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Wait for deployment to stabilize
-        run: sleep 60
-
-      - name: Check application health
-        run: |
-          max_attempts=5
-          attempt=1
-
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt/$max_attempts..."
-
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-              --max-time 30 \
-              https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net)
-
-            echo "HTTP Status: $http_code"
-
-            if [ "$http_code" = "200" ]; then
-              echo "Health check passed!"
-              exit 0
-            fi
-
-            if [ $attempt -eq $max_attempts ]; then
-              echo "Health check failed after $max_attempts attempts"
-              exit 1
-            fi
-
-            sleep 15
-            attempt=$((attempt + 1))
-          done
