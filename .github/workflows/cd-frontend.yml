@@ -34,7 +34,7 @@ jobs:
 
       - name: Create deployment package
         run: |
-          zip -r deploy.zip .next public package.json package-lock.json next.config.mjs node_modules .deployment
+          zip -r deploy.zip . -x '.git/*' 'node_modules/*' '.github/*'
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
