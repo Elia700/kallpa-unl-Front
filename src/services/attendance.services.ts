@@ -11,7 +11,7 @@ import type {
 } from '@/types/attendance';
 import { fetchWithSession } from './fetchWithSession';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 /**
  * Genera los headers de autenticación para las peticiones.
@@ -39,7 +39,7 @@ export const attendanceService = {
    */
   async getSchedules() {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/schedules`,
+      `${API_URL}/api/attendance/v2/public/schedules`,
       {
         method: 'GET',
         headers: getHeaders(),
@@ -61,7 +61,7 @@ export const attendanceService = {
    */
   async createSchedule(data: CreateScheduleData) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/schedules`,
+      `${API_URL}/api/attendance/v2/public/schedules`,
       {
         method: 'POST',
         headers: getHeaders(),
@@ -86,7 +86,7 @@ export const attendanceService = {
    */
   async updateSchedule(id: string | number, data: Partial<CreateScheduleData>) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/schedules/${id}`,
+      `${API_URL}/api/attendance/v2/public/schedules/${id}`,
       {
         method: 'PUT',
         headers: getHeaders(),
@@ -109,7 +109,7 @@ export const attendanceService = {
    */
   async deleteSchedule(id: string | number) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/schedules/${id}`,
+      `${API_URL}/api/attendance/v2/public/schedules/${id}`,
       {
         method: 'DELETE',
         headers: getHeaders(),
@@ -134,7 +134,7 @@ export const attendanceService = {
   async getParticipantsByProgram(program?: string) {
     const params = program ? `?program=${program}` : '';
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/participants${params}`,
+      `${API_URL}/api/attendance/v2/public/participants${params}`,
       {
         method: 'GET',
         headers: getHeaders(),
@@ -197,7 +197,7 @@ export const attendanceService = {
     }
 
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/history?${params.toString()}`,
+      `${API_URL}/api/attendance/v2/public/history?${params.toString()}`,
       {
         method: 'GET',
         headers: getHeaders(),
@@ -219,7 +219,7 @@ export const attendanceService = {
    */
   async getSessionDetail(scheduleExternalId: string, date: string) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/history/session/${scheduleExternalId}/${date}`,
+      `${API_URL}/api/attendance/v2/public/history/session/${scheduleExternalId}/${date}`,
       {
         method: 'GET',
         headers: getHeaders(),
@@ -242,7 +242,7 @@ export const attendanceService = {
    */
   async deleteAttendance(scheduleId: string, date: string) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/session/${scheduleId}/${date}`,
+      `${API_URL}/api/attendance/session/${scheduleId}/${date}`,
       {
         method: 'DELETE',
         headers: getHeaders(),
@@ -268,7 +268,7 @@ export const attendanceService = {
     attendances: { participant_external_id: string; status: string }[];
   }) {
     const res = await fetchWithSession(
-      `${API_URL}/attendance/v2/public/register`,
+      `${API_URL}/api/attendance/v2/public/register`,
       {
         method: 'POST',
         headers: getHeaders(),

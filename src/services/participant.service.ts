@@ -1,7 +1,7 @@
 import { Participant, UpdateParticipantData } from "@/types/participant";
 import { fetchWithSession } from "./fetchWithSession";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export const participantService = {
   getHeaders() {
@@ -13,7 +13,7 @@ export const participantService = {
   },
 
   async getAll(): Promise<Participant[]> {
-    const response = await fetchWithSession(`${API_URL}/users`, {
+    const response = await fetchWithSession(`${API_URL}/api/users`, {
       method: "GET",
       headers: this.getHeaders(),
     });
@@ -55,7 +55,7 @@ export const participantService = {
   async getById(externalId: string): Promise<Participant | null> {
     // Usar el endpoint específico de participantes que incluye datos del responsable
     try {
-      const response = await fetch(`${API_URL}/participants/${externalId}`, {
+      const response = await fetch(`${API_URL}/api/participants/${externalId}`, {
         method: "GET",
         headers: this.getHeaders(),
       });
@@ -95,7 +95,7 @@ export const participantService = {
     }
 
     // Fallback: obtener todos y filtrar (no incluye datos del responsable)
-    const response = await fetch(`${API_URL}/users`, {
+    const response = await fetch(`${API_URL}/api/users`, {
       method: "GET",
       headers: this.getHeaders(),
     });
@@ -140,7 +140,7 @@ export const participantService = {
   },
 
   async changeStatus(externalId: string, newStatus: string) {
-    const response = await fetchWithSession(`${API_URL}/users/${externalId}/status`, {
+    const response = await fetchWithSession(`${API_URL}/api/users/${externalId}/status`, {
       method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify({ status: newStatus }),
@@ -156,7 +156,7 @@ export const participantService = {
   },
 
   async getPasantes(): Promise<Participant[]> {
-    const response = await fetch(`${API_URL}/users`, {
+    const response = await fetch(`${API_URL}/api/users`, {
       method: "GET",
       headers: this.getHeaders(),
     });
@@ -221,7 +221,7 @@ export const participantService = {
         program: data.program,
       };
 
-    const response = await fetchWithSession(`${API_URL}/save-participants`, {
+    const response = await fetchWithSession(`${API_URL}/api/save-participants`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
@@ -236,7 +236,7 @@ export const participantService = {
   },
 
   async getActiveParticipantsCounts(): Promise<{ adult: number; minor: number }> {
-    const response = await fetch(`${API_URL}/participants/active/count`, {
+    const response = await fetch(`${API_URL}/api/participants/active/count`, {
       method: "GET",
       headers: this.getHeaders(),
     });
@@ -256,7 +256,7 @@ export const participantService = {
    * envía estructura anidada {participant: {...}, responsible: {...}}.
    */
   async updateParticipant(externalId: string, data: UpdateParticipantData) {
-    const response = await fetchWithSession(`${API_URL}/participants/${externalId}`, {
+    const response = await fetchWithSession(`${API_URL}/api/participants/${externalId}`, {
       method: "PUT",
       headers: this.getHeaders(),
       body: JSON.stringify(data),

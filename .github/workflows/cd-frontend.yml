@@ -9,7 +9,7 @@ on:
 env:
   NODE_VERSION: '20.x'
   AZURE_WEBAPP_NAME: 'kallpa-frontend-app'
-  NEXT_PUBLIC_API_URL: 'https://kallpa-backend-app-h7dad0fnghd9bjhs.westus3-01.azurewebsites.net/api'
+  NEXT_PUBLIC_API_URL: 'https://kallpa-backend-app-h7dad0fnghd9bjhs.westus3-01.azurewebsites.net'
 
 jobs:
   build-and-deploy:

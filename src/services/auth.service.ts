@@ -1,13 +1,13 @@
 import { LoginRequest, LoginResponse } from "@/types/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   export const authService = {
     async login(credentials: LoginRequest): Promise<LoginResponse> {
       let response;
 
       try {
-        response = await fetch(`${API_URL}/auth/login`, {
+        response = await fetch(`${API_URL}/api/auth/login`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -48,7 +48,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
     if (!token) {
       throw new Error("No hay sesión activa");
     }
-    const response = await fetch(`${API_URL}/auth/refresh`, {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

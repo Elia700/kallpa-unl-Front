@@ -2,7 +2,7 @@ import { CreateUserRequest, CreateUserResponse } from "../types/user";
 import { get, put } from "@/hooks/apiUtils";
 import { fetchWithSession } from "./fetchWithSession";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export interface UserProfileData {
   firstName: string;
@@ -21,7 +21,7 @@ export const userService = {
     };
   },
   async createUser(data: CreateUserRequest): Promise<CreateUserResponse> {
-    const response = await fetchWithSession(`${API_URL}/save-user`, {
+    const response = await fetchWithSession(`${API_URL}/api/save-user`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(data),
@@ -36,11 +36,11 @@ export const userService = {
   },
 
   async updateProfile(data: UserProfileData) {
-    const response = await put("/users/profile", data);
+    const response = await put("/api/users/profile", data);
     return response;
   },
   async getProfile() {
-    const response = await fetchWithSession(`${API_URL}/users/profile`, {
+    const response = await fetchWithSession(`${API_URL}/api/users/profile`, {
       method: "GET",
       headers: this.getHeaders(),
     });
